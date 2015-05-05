@@ -1,0 +1,456 @@
+\documentclass[english]{ddny}
+
+%% Kodovani a fonty
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+%% AMS balicky
+\usepackage{amsmath,amsthm,amssymb}
+
+%% Grafika
+\usepackage{graphicx}
+\usepackage{colortbl}
+
+\begin{document}
+
+\title{Distributed data processing for High Energy Physics}
+\author{Dzmitry Makatun}{km}{3}{dzmitry.makatun@fjfi.cvut.cz}
+
+\advisor{J\'er\^ome~Lauret}
+\inst{STAR, Brookhaven National Laboratory, USA}
+
+\advisor{Hana~Rudov\'a}
+\inst{Masaryk University, Czech Republic }
+
+\advisor{Michal~\v{S}umbera }
+\inst{Nuclear Physics Institute, Academy of Sciences,
+ Czech Republic}
+
+\maketitle
+
+\begin{abstract}{english}
+
+\end{abstract}
+
+\begin{keywords}{english}
+constraint programming, Grid, Cloud, data processing , data transferring, data production, planning, scheduling, optimization, computational jobs, batch system.
+\end{keywords}
+
+\begin{abstract}{czech}
+
+\end{abstract}
+
+\begin{keywords}{czech}
+
+\end{keywords}
+
+\tableofcontents
+
+
+\section{Introduction}
+The STAR experiment at the Relativistic Heavy Ion Collider (RHIC) studies a primordial form of matter that existed in the universe shortly after the Big Bang. Collisions of heavy ions occur millions of times per second inside the detector, producing tens of petabytes of raw data each year. All the raw data has to be processed in order to reconstruct physical events which are further analyzed by scientists. This process is called data production.  Like any other modern experiment in High Energy and Nuclear Physics (HENP), STAR intends to rely on distributed data processing, making use of several remote computational sites (for some experiments this number can scale up to several hundreds).
+
+When running data intensive applications on distributed computational resources long I/O overheads may be observed as access to remotely stored data is performed. Latency and bandwidth can become the major limiting factors for the overall computation performance and can reduce the CPU time\,/\,wall time ratio due to excessive I/O wait.  Widely used data management systems in HENP community (Xrootd, DPM) are focused on providing heterogeneous access to distributed storage and do not consider data pre-placement with respect to available CPUs, job durations or network performance. At the same time job scheduling systems (PBS, Condor) do not reason about transfer overheads when accessing data at distributed storage. For this reason, an optimization of data transferring and distribution across multiple sites is often done manually, using a custom setup for each particular infrastructure \cite{Balewski_2012pa}.
+
+\subsection{Data production}
+\subsection{Previous work}
+Previous collaborative work between BNL (Brookhaven National Laboratory) and NPI/ASCR (Nuclear Physics Institute, Academy of Sciences of the Czech Republic) showed that the global planning of data transfers within the Grid can outperform widely used heuristics such as Peer-to-Peer and Fastest link (used in Xrootd)\cite{Zerola,Makatun}. Those results became the ground for continuation of research and extension of global planning to the entire data processing workflow, i.e., scheduling of CPU allocation, data transferring and  placement at storage.  
+
+In previous, we addressed the problem of efficient data transferring in a Grid environment \cite{Zerola}. % and cache management \cite{Makatun_cache}. 
+Data transfers between $n$~computational sites and $m$~data locations were considered but job scheduling was not covered by that work. In \cite{ACAT_2014} we proposed a constraint programming planner that schedules computational jobs and data transfers in a distributed environment in order to optimize resource utilization and reduce the overall completion time. Since such global scheduling is computationally demanding it should be divided into several stages in order to improve scheduler performance and scalability. A planing of resource load can be completed in the first stage before scheduling file transfers and jobs. In this work we address the problem of data production planning, answering the question how the data should be transferred given the network structure, bandwidth, storage and CPU slots available. This will allow local schedulers to process jobs and have CPUs busy all the time while not exceeding disk and network capacities.
+
+\section{Problem analysis}
+Long I/O overheads when accessing data from remote site can significantly reduce the application's CPUtime/WallTime ratio \cite{HorkyACAT,Betev}. For this reason, when setting up a data production at remote sites one has to consider the network throughput, available storage and CPU slots. When there are few remote sites involved in the data processing, the load can be tuned manually and simple heuristic may work, but, as the number of sites grows and the environment is constantly changing (site outage, fluctuations of network throughput and CPU availability), an automated planning of workflows becomes needed. 
+
+As an intuitive example of optimization let us consider a situation when a given dataset can be either processed locally, or can be sent to a remote site. Depending on transfer overhead it may appear to be optimal to wait for free CPU slots at the local site and process all the data there, or send a smaller fraction of the dataset for remote processing. Commonly used heuristics such as ``\textit{Pull a job when a CPU slot is free}'' will not provide an optimization with respect to an overall processing makespan.  
+
+Another example arises from a workflow optimization which was done for inclusion of the ANL (Argonne National Laboratory) computational facility into the Cloud based data production of the STAR experiment \cite{Balewski}. In this case, and due to the lack of local storage at the site for buffering, the throughput of a needed direct on-demand network connection between BNL (New York) and ANL (Illinois) was not sufficient to saturate all the available CPUs at the remote site. An optimization was achieved by feeding CPUs at ANL from two sources: directly from BNL and through an intermediate site NERSC (National Energy Research Scientific Computing Center, California) having large local caching and with better connectivity to ANL. This example illustrates an efficient use of indirect data transfers which cannot be guessed by simple heuristics. A general illustration of distributed resources used for data production and their interconnection is given at Figure \ref{fig:simulated grig}.
+
+\begin{figure}[h]
+\begin{minipage}{.49\textwidth}
+\centering
+    \includegraphics[trim =30mm 30mm 30mm 30mm ,clip, width=.5\textwidth]{pic/Data_production_general_bw2.pdf}
+    \caption{Schema of data production in the Cloud.}
+    \label{fig:simulated grig}
+\end{minipage}\hspace{1pc}%
+\begin{minipage}{.49\textwidth}
+\centering
+    \includegraphics [trim =30mm 35mm 30mm 40mm ,clip, width=.49\textwidth]{pic/link_selection_bw3.pdf}	
+    \caption{An example of a transfer path. Illustration for constraints 1-4 in section \ref{path}.  }
+    \label{fig:path}
+\end{minipage} 
+\end{figure}
+
+Scheduling of computational jobs submitted by users (user analysis) has even more degrees of possible optimization: selection between multiple data sources, grouping of jobs that use the same input files. This case becomes even more complex due to a poor predictability of the user analysis jobs. However,  the main question for optimization remains the same as for the examples above: How to distribute a given set of tasks over the available set of resources in order to complete all the tasks within minimal time?
+
+
+
+
+\subsection{Existing solutions}
+\subsection{Related works}
+Optimization of data intensive applications in Grid was studied
+in~\cite{Globus_scheduler}. In this work an optimization was achieved by
+replication of highly used files to more sites while the jobs were executed
+where their input data is located. However, this is not the case for data
+production, when each file has to be processed once. 
+%
+Explicit model distributing jobs over a Grid with respect to the network
+bandwidth was proposed in~\cite{Trees}. The network structure of the Grid was
+modeled as a tree and all the files were assumed to be of the same size and
+processing time. In our study we do not limit the network topology to trees,
+and assume fluctuations of job parameters. 
+\subsection{Usecases}
+
+\section{Problem formalization}
+\subsection{Network flow maximization approach}
+Due to a data level of parallelism a typical workflow of HENP computation
+consists of independent jobs using one CPU, one input and one output file. We
+assume there is a local scheduler running at each site, which picks a new
+input file to process from the local storage of that site each time when a CPU becomes
+free. Input data must be transferred from the central storage
+to each site in such a manner that at the every moment of time there is enough
+input files at each site to keep all the available CPUs busy while not
+exceeding the local storage and network throughput. Another task
+is to transfer the output files back to central storage, cleaning each local
+storage for the new input.
+
+Let us consider a scheduling time interval $\Delta T$. We assume that at the
+starting moment all the CPUs in the Grid are busy, and there is some amount of
+input data already placed at each site. We need to transfer the next portion
+of data to each site during time interval $\Delta T$ in order to avoid
+draining of the local queue by the end of this interval. 
+
+The computational Grid is represented by a directed weighted graph where
+vertexes $c_{i} \in C$ are computational nodes and edges $l_{j} \in L$ are
+network links. Weight of each link $b_{j}$ is the amount of data that can be
+transferred over the link per unit of time (i.e. bandwidth). One of the nodes
+$c_{0}$ is the central storage where all the input files for the further
+processing are initially placed. All the output files has to be transferred
+back to $c_{0}$ from the computational nodes. We will give two separate
+problem formulations: for an input and output transfer planning. 
+
+In order to formulate a network flow maximization problem \cite{Network_flows}
+for input/output file transferring we have to define a capacitated $\{s,t\}$
+network, which is a set of vertexes $V$ including a source $s$ and a sink $t$;
+and a set of edges $e\in E$ with their capacities $cap(e)$. A solution that
+assigns a nonnegative integer number $f(e)$ to each edge $e \in E$ can be
+found in polynomial time with known algorithms.
+
+\subsubsection{Input flow planning}
+In order to transform a given graph of a Grid into a capacitated $\{s,t\}$
+network for an input transfer problem we add two dummy vertexes: a source $s$
+and a sink $t$. Next we add  dummy edges $d_{i} \in D$ from each computational
+node $i$ to the sink, and a dummy edge $q_{0}$ from the source $s$ to the
+central storage $c_{0}$. These dummy edges allow us to introduce constraints
+on the storage capacity of the nodes. The set of vertexes $V$ consists of
+computational nodes $C$ and dummy vertexes: $V= C \cup \{s,t\}$. The final set
+of edges consists of real network links $L$, dummy edges $D$ from
+computational nodes to the sink and from the source to the central storage
+$q_{0}$: $E= L \cup D \cup \{q_{0}\}$. Capacity of each edge defines the
+maximal amount of data that can be transferred over an edge within time
+interval $\Delta T$: 
+%
+\begin{equation} 
+\label{edge_cap} 
+cap(e) = \left\{
+\begin{array}{l l} 
+b_{j} \cdot \Delta T & \text{if }e = l_{j} \in L \\ w_{i} &
+\text{if } e = d_{i} \in D\\ k_{0} & \text{if } e = q_{0} 
+\end{array} \right.
+\end{equation} 
+%
+where $w_{i}$ is the maximal amount of data that can be
+transferred to the node $i$ without exceeding its storage capacity $Disk_{i}$
+and $k_{0}$ is the total size of available input files at $c_{0}$. We denote
+the solution for the input transfer problem as $f^{in}(e)$.
+
+\subsubsection{Output flow planning}
+For transfer of output files we use a similar transformation, but swap the
+source $s$ and the sink $t$, change the direction of dummy edges and redefine
+capacities of dummy edges. In this case the capacity $\overline{k}_{0}$ of the
+dummy edge $\overline{q}_{0}$ leading from the central storage $c_0$ to the
+sink $s$ is equal to the amount of data which can be transferred to $c_0$
+within time interval $\Delta T$ (it is limited by the available space at the
+central storage). The capacity $\overline{w}_{i}$ of dummy edges
+$\overline{d}_{i}$ leading from the source $t$ to computational nodes $c_{i}$
+is equal to the maximum amount of output data which can be transferred from
+the node $c_{i}$.
+%
+\begin{equation}
+\label{edge_cap_out}
+cap(e) = \left\{ 
+  \begin{array}{l l}
+    b_{j} \cdot \Delta T & \text{if }e = l_{j} \in L \\
+    \overline{w}_{i} & \text{if } e = \overline{d}_{i} \in \overline{D}\\
+    \overline{k}_{0} & \text{if } e = \overline{q}_{0}
+  \end{array} \right.
+\end{equation}
+%
+We denote the solution for the output transfer problem as $f^{out}(e)$.
+
+\subsubsection{Calculating capacity of dummy edges}
+\label{dummycap}
+Let us consider data production jobs which perform the same type of processing on the same type of files.
+Duration $p_{j}$ of job $j$  processing input file of size $InSize_{j}$ at node $i$ is
+\begin{equation}
+\label{alpha}
+p_{j} = \alpha_{i} \cdot InSize_{j} 
+\end{equation}
+Figure \ref{alpha-distr} shows a distribution of parameter $\alpha$ for 7000 of data production jobs executed at the same computational site (KISTI). It can be observed that the narrow peaks correspond to jobs using input files of the different type (\texttt{"st\_physics", "st\_physics", "st\_physics\_adc", "st\_jet"}, etc.). For this reason, parameter $\alpha$ can be considered constant for a given type of data processing at a given site. 
+
+\begin{figure}[h]
+	\begin{center}
+		\includegraphics [trim= 20mm 30mm 10mm 30mm , clip, width=0.7\textwidth]{pic/alpha.pdf}
+	\end{center}
+	\caption{Distribution of parameter $\alpha$ (job duration divided by input file size) calculated for sample of 7000 jobs executed at KISTI during June - September 2014. Narrow peaks correspond to jobs using input files of different types (\texttt{"st\_physics"} at 40 s/MB, \texttt{"st\_physics\_adc"} at 3 s/MB, \texttt{"st\_jet"} at 35 s/MB, etc.). For this reason, parameter $\alpha$ can be considered constant for a given type of data processing.}
+	\label{alpha-distr}
+\end{figure} 
+
+The ratio of size of input $InSize_{j}$ and output $OutSize_{j}$ files of each job $j$ is considered to be constant for the same type of data processing:
+\begin{equation}
+\label{beta}
+OutSize_{j} = \beta \cdot InSize_{j} 
+\end{equation}
+Figure \ref{beta-distr} shows a distribution of parameter $\beta$ for 7000 of data production jobs executed at the same computational site (KISTI). Similarly to written above, for a given type of data processing this parameter can be considered constant. 
+
+During time interval $\Delta T$ (which should be long enough) a node $i$ with number of CPUs $NCPU_{i}$ will process $\frac{1}{\alpha_{i}} \cdot NCPU_{i} \cdot \Delta T$ of input data and will produce $\frac{\beta}{\alpha_{i}} \cdot NCPU_{i} \cdot \Delta T$ of output data.
+
+\begin{figure}[h]
+	\begin{center}
+		\includegraphics [trim= 20mm 30mm 10mm 30mm , clip, width=0.7\textwidth]{pic/beta.pdf}
+	\end{center}
+	\caption{Distribution of parameter $\beta$ (ratio of output file size over input file size) calculated for sample of 7000 jobs executed at KISTI during June - September 2014. Narrow peaks correspond to jobs using input files of different types (\texttt{"st\_physics"} at 0.72, \texttt{"st\_physics\_adc"} at 0.04, \texttt{"st\_fms"} at 0.5 , etc.). For this reason, parameter $\beta$ can be considered constant for a given type of data processing.}
+	\label{beta-distr}
+\end{figure} 
+
+Let us consider a storage at a processing node $i$ during time interval $\Delta T$. 
+$Disk_{i}$ is available disk space at node $i$.
+The $I_{i}^{in}$ is the initial size of input data stored at the local storage;
+$I_{i}^{out}$ is the initial size of output data at the storage; 
+$New_{i}^{in}$ is the amount of input data that will be transferred to $i$ during $\Delta T$; 
+$Del_{i}^{in}$ is the amount of input data that will be deleted from the storage, because the jobs using these input data will be completed; 
+$Del_{i}^{out}$ is the amount of output data which will be deleted from the storage, because it will be transferred out of the node; 
+$New_{i}^{out}$ is the size of new output files to be created during $\Delta T$;
+$Min_{i}^{in}$ is minimal amount of input data (this includes input files of running jobs and files in the local queue to ensure stable CPU saturation), 
+$Min_{i}^{out}$ - total size of output files which can not be transferred because the jobs which produce them are not finished (output files of running jobs). 
+
+In the end of $\Delta T$ there should be enough input data to keep CPUs busy:
+\begin{equation}
+I_{i}^{in} + New_{i}^{in} - Del_{i}^{in} \geq Min_{i}^{in} \geq 0
+\label{indata}
+\end{equation}
+
+In the end of $\Delta T$ the storage capacity should not be exceeded:
+
+\begin{equation}
+0 \leq I_{i}^{in} + I_{i}^{out} + New_{i}^{in} + New_{i}^{out} - Del_{i}^{in} - Del_{i}^{out} \leq Disk_{i}
+\label{maxdisk}
+\end{equation}
+
+The balance of the output data at the end of $\Delta T$ is:
+\begin{equation}
+I_{i}^{out} + New_{i}^{out} - Del_{i}^{out} \geq Min_{i}^{out} \geq 0
+\label{outdata}
+\end{equation}
+
+If the scheduling interval $\Delta T$ is long enough, then we can use the following approximation:
+\begin{equation}
+Del_{i}^{in} \approx \frac{1}{\alpha_{i}} \cdot NCPU_{i} \cdot \Delta T
+\label{delIn}
+\end{equation}
+and
+\begin{equation}
+New_{i}^{out} \approx \frac{\beta}{\alpha_{i}} \cdot NCPU_{i} \cdot \Delta T
+\label{newOut}
+\end{equation}
+Then, combining Equations \ref{indata}, \ref{maxdisk}, \ref{delIn} and \ref{newOut} we can estimate amount of new input data $New_{i}^{in}$ which can be transferred to a node.
+\begin{equation}
+Min_{i}^{in} + \frac{1}{\alpha_{i}} \cdot NCPU_{i} \cdot \Delta T - I_{i}^{in} 
+\leq New_{i}^{in} \leq
+Disk_{i} - I_{i}^{in} - I_{i}^{out} + \frac{1 - \beta}{\alpha_{i}} \cdot NCPU_{i} \cdot \Delta T + Del_{i}^{out}
+\label{newIn}
+\end{equation}
+
+Similarly, using Equations \ref{outdata} and \ref{newOut} the amount of output data which can be deleted from a node is
+\begin{equation}
+\label{delOut}
+Del_{i}^{out} \leq I_{i}^{out} + \frac{\beta}{\alpha_{i}} \cdot NCPU_{i} \cdot \Delta T - Min_{i}^{out}
+\end{equation}  
+
+Since $w_{i}$ was defined in Subsection \ref{in_problem} as maximal amount of input data that can be transferred to the computing node $c_{i}$, we can now define it using Equation \ref{newIn}:
+\begin{equation}
+w_{i} =
+Disk_{i} - I_{i}^{in} - I_{i}^{out} + \frac{1 - \beta}{\alpha_{i}} \cdot NCPU_{i} \cdot \Delta T + Del_{i}^{out}
+\label{w}
+\end{equation}
+where $Del_{i}^{out}$ is equal to the amount of data which will be transferred from node $c_{i}$, i.e. the solution to the output transfer problem $f^{out}(\overline{d}_{i})$ (see Subsection \ref{out_problem}). The other values used in Equation \ref{w} can be obtained from monitoring data.
+
+Similarly, $\overline{w}_{i}$ was defined in Subsection \ref{out_problem} as maximal amount of output data which can be transferred from node $c_{i}$. From Equation \ref{delOut} we obtain:
+\begin{equation}
+\label{sigma}
+\overline{w}_{i} = I_{i}^{out} + \frac{\beta}{\alpha_{i}} \cdot NCPU_{i} \cdot \Delta T - Min_{i}^{out}
+\end{equation}  
+where $\Delta T$,  $Min_{i}^{out}$ are parameters of the scheduler, and the rest of the values can be extracted from monitoring system.
+
+\subsection{Disjoint input and output transfer}
+In this subsection we will prove that maximum flow problems for input and output transfers can be solved independently under assumptions: (a) all the real network links in considered Grid are full-duplex, i.e. network throughput between two nodes is the same in both directions (b) in stable regime size of output transferred from each node is proportional to size of input transferred to that node at each scheduling interval, i.e. $f^{out}(\overline{d}_{i})= \beta \cdot f^{in}(d_{i})$, where $\beta \leq 1$.
+
+Let us consider two distinct computational nodes $c_{1}$ and $c_{2}$ connected by two opposite directed links $l_{1}=(c_{1},c_{2})$ and $l_{2}=(c_{2},c_{1})$ with equal capacities $cap(l_{1})=cap(l_{2})$. If a solution of the input transfer problem assigns flows to this links such that $f^{in}(l_{1}) \geq f^{in}(l_{2}) > 0$ then we can substitute such solution $f^{in}(e)$ with a new one $\widehat{f}^{in}(e)$ where $\widehat{f}^{in}(l_{1}) = f^{in}(l_{1}) - f^{in}(l_{2})$, $\widehat{f}^{in}(l_{2}) = 0$ and flows over the rest of the links are unchanged. The same is true for output transfer. This proves that in an optimal solution the same type of files (input or output) are transferred between any two nodes in one direction only, i.e. over one of directed links only. 
+
+If we have an optimal solution for the input flow maximization problem $f^{in}(e)$ we can produce from it an optimal solution for the output flow maximization problem $f^{out}(e)$ such that for any opposite pare of links $l_{1}=(c_{1},c_{2})$ and $l_{2}=(c_{2},c_{1})$ the output flow is $f^{out}({l_{1}}) = \beta \cdot f^{in}({l_{2}})$ and since $\beta < 1$ the capacity of links is not exceeded  $f^{out}({l_{1}}) =\beta \cdot f^{in}(l_{2}) \leq f^{in}(l_{2}) \leq cap(l_{2}) = cap(l_{1})$. Due to symmetry of the two problems, this solution  $f^{out}(e)$ is also the maximum flow for the output transfer problem. Combining this with what was proven in previous paragraph, if $f^{in}({l_{1}}) > 0$ then $f^{in}({l_{2}}) = 0$ and thus $f^{out}({l_{1}}) = 0$. This means that in the optimal solution input and output files are never transferred over the same link. And thus, maximum flow problems for input and output transfers can be solved independently. 
+
+
+\subsubsection{Solving Procedure}
+\label{solve}
+It can be proven that the maximum flow problems for input and output transfers
+can be solved independently under assumptions: (a) all the real network links
+in the considered Grid are full-duplex, i.e., a network throughput between two
+nodes is the same in both directions (b) in a steady state the size of the
+output transferred from each node is proportional to the size of the input
+transferred to that node in each scheduling interval, i.e.,
+$f^{out}(\overline{d}_{i})= \beta \cdot f^{in}(d_{i})$, where $\beta \leq 1$.
+
+Since in real environment the assumption (b) will not strongly hold due to
+resource performance fluctuations we propose the following approach to
+solve the problem:
+%
+\begin{enumerate}
+\item Calculate values for $\overline{w}_{i}$ using Eqn.~\ref{sigma}.
+\item Solve the problem for output data flows to obtain $f^{out}(e)$.
+\item Using Eqn.~\ref{w} and $Del_{i}^{out} = f^{out}(\overline{d}_{i})$ calculate $w_{i}$.
+\item For real links $l \in L$ reduce the capacity by the amount which is used by output transfers: $cap(l_{j}) = b_{j} \cdot \Delta T - f^{out}(l_{j})$.
+\item Solve the problem for input transfers with $w_{i}$ and $cap(l_{j})$ defined in previous steps. Find input data flows $f^{in}(e)$.
+\end{enumerate}
+%
+To conclude, this procedure is expected to compute feasible data transfers 
+such that CPUs in Grid are busy with computational jobs while not exceeding 
+local disk capacities.
+
+\subsection{Constraint programming approach}
+Problems of scheduling, planning and optimization are being commonly solved with the help of Constraint Programming (CP) \cite{CP}. It is a form of declarative programming which is widely used in scheduling, logistics, network planning, vehicle routing, production optimization etc... In the next sections we will introduce our Constraint Satisfaction Problem (CSP) formulation for a data production at multiple sites and provide a simulation-based evaluation of the proposed model.
+
+We will introduce only the core concepts of our CSP formulation and search algorithms, omitting  detailed mathematical expressions.
+The following input parameters are necessary to define our CSP.
+\begin{description}
+\item[Computational Grid] (see Figure \ref{fig:simulated grig}) is described by directed weighted graph where nodes are computational sites $c$ with a given number of CPUs $cpu_{c}$ and storage space $disk_{c}$; edges are network links $l$ with weight $slowdown_{l}$ which is the time required to transfer a unit of data ($slowdown_{l}=\frac{1}{throughput_{l}}$). A dedicated storage facility, such as HPSS, can also be modeled as a node with $cpu_{c}=0$.
+\item[Set of jobs.] Each job $j$ has a $duration_{j}$, it needs one input file of $inputSize_{j}$, produces one output file of $outputSize_{j}$, input file is placed at $inputSourceNodes_{j}$ and output file must be transferred to one of $outputDestinationNodes_{j}$.
+\end{description}
+Our goal is to create a schedule of jobs at computational sites, transfers over links and a placement of files at storages for a given computational Grid and a set of jobs. In order to solve this problem the variables of our model define the \textit{resource selection} and  \textit{timing} of each task:
+\begin{description}
+\item[Resource selection variables] define a node $ProcessingNode_{j}$ where the job $j$ will be executed and a transfer path for each file $f$ (either input or output of a job). The transfer path is described by a set of boolean variables $X_{fl}$ where $true$ means that a file $f$ will be transferred over a link $l$ and $false$ means the opposite.
+\item[Time variables] are: $Js_{j}$ is a start time of a job $j$, $Ts_{fl}$ is a start time of a transfer of a file $f$ over a link $l$, $Fs_{fc}$ is a start time of a placement of a file $f$ at a node $c$, $Fdur_{fc}$ is a duration of a placement of a file $f$ at a node $c$.
+\end{description} 	 
+ In our model we assume that a network link can be modeled as an unary resource with no loss of generality. The measurements in \cite{Zerola} have shown, that  a sequential transfer of a set of files does not require more time than a parallel transfer of the same set of files over the same link.
+
+\subsubsection{Search overview}
+We use an incomplete search which can provide a suboptimal solution of required quality within a given time limit because the final goal is to create a planner that can process requests online.
+For a better search performance the overall problem is divided into two subproblems and the search is performed in two stages: 
+\begin{enumerate}
+\item Planning Stage: instantiate a part of variables in order to assign resources for each task.     
+	\begin{enumerate}
+	\item Assign jobs to computational nodes. 
+	\item Select transfer paths for input and output files. 
+	\item Estimate a makespan for a given resource assignment $estMakespan$.
+	\item Find a solution for the subproblem with a minimal estimated makespan. 
+	\end{enumerate}
+\item Scheduling stage: define a start time for each operation. 
+	\begin{enumerate}
+	\item Define the order of operations. 
+	\item Put cumulative constraints on resources in order to avoid their oversaturation at any moment of time.
+	\item Find a solution with a minimal $makespan$ which is the end time of the last task. 
+	\end{enumerate}
+\end{enumerate}
+
+\subsubsection{Constraints at the planning stage}
+
+At the planning stage we have to assign a transfer path for an input and an output file of each job which can be defined by the following constraints (see Figure \ref{fig:path}):
+\begin{description}
+\label{path}
+		%\setcounter{enumi}{-1}
+		\item[1.] An input file has to be transferred from one of its sources over exactly one link.
+		\item[2.] An output file has to be transferred to one of its destinations over exactly one link.
+		\item[3.] An intermediate node (neither source, destination nor selected for the job execution) either has exactly one incoming and outgoing transfer or is not on a transfer path:\\ $\exists$ incoming transfer $\Leftrightarrow \exists$ outgoing transfer. 
+		\item[4.] There must exist exactly one incoming transfer of an input file and exactly one outgoing transfer of an output file at the node which was selected for the job execution.	
+		\item[5.] A file can be transferred from/to each node at most once.		
+\end{description}
+In addition, we use constraints for loop elimination similarly as it is described in \cite{Rudova}.
+
+\subsubsection{Constraints at the scheduling stage}
+At the scheduling stage the problem is to assign a start time for each task. The following constraints on order of tasks are implemented:
+\begin{itemize}
+\item An outgoing transfer of a file from a node can start only after an incoming transfer to that node is finished.  The first transfer of an input file from its source and the first transfer of an output file from the processing node are exceptions from this constraint.
+\item A job can start only after the input file is transferred to the selected processing node.
+\item An output file can be transferred only after the job is finished.
+\item A reservation of space for a file at a node is made when a transfer to that node starts.
+\item A file can be deleted from the start node of a link after the transfer is finished.
+\item  A reservation of space for an output file is made at the processing node when the job starts.
+\item An input file can be deleted from a processing node after the job is finished.
+\end{itemize}
+Cumulative constraints are widely used in Constraint Programming for description of resource usage by tasks. Each cumulative constraint requires that a set of tasks given by \textit{start times}, \textit{durations} and \textit{resource usage}, never require more than a \textit{resource limit} at any time. In our case we use three sets of cumulative constraints: for CPUs, storages and links (see Table \ref{tab:cumulative}).
+
+\begin{table}
+\caption{Variables and parameters used in cumulative constrains on resources.}
+\label{tab:cumulative}
+\begin{center}
+\begin{tabular}{ l  l  l  l  l }
+ \hline                   
+  Task & Start & Duration & Usage & Limit \\ \hline 
+  Job & \textbf{$Js_{jc}$} & $duration_{j}$ & $1$ & $cpu_{c}$ \\ 
+  Transfer & \textbf{$Ts_{fl}$} & $size_{f}\cdot slowdown_{l}$ & $1$ & 1 \\ 
+  File placement & \textbf{$Fs_{fc}$} & \textbf{$Fdur_{fc}$} & $size_{f}$ & $disk_{c}$ \\ 
+  \hline 
+\end{tabular}
+    \label{fig:simulated grig} 
+    \end{center}
+\end{table}
+
+\section{Simulations}
+The constraint satisfaction problem was implemented using MiniZinc \cite{MiniZinc} and Gecode \cite{Gecode} was used as a solver. The timelimit was set to 3 minutes for both planning and scheduling stages. The simulations were running under Windows 8 64-bit on a computer with Intel i5 (4 cores) 2.50 GHz processor and 6 GB of memory installed. The Gecode solver was running in a parallel mode using 4 threads. 
+
+The simulated environment consisted of 3 nodes: a central storage HPSS ($cpu_{HPSS}=0$) which was the single source for input files and the single destination for output files, a local processing site and a remote processing site. The slowdown of links between the central HPSS and the local site was set to 0, which means that transfer overheads to/from the local site are negligible comparing to a job duration. The slowdown of the links to/from the remote site was increasing in each simulation proportionally to a slowdown factor. The parameters of jobs were taken from logging system of the STAR experiment's data production at computational site KISTI (Korea Institute of Science and Technology Information) \cite{KISTI}. The average job duration was 3,000 minutes and average time of transfer was 5 and 10 minutes to/from the remote site respectively (in the simulations where the slowdown factor $= 1$). Then, in further simulations the transfer times increase proportionally to the slowdown factor. In the simulated environment 80\% of CPUs were available at the local site and 20\% at the remote site. 2,000 of jobs were scheduled stepwise by subsets (chunks) of 200. Storage constraints were not considered in these simulations. Four different scheduling strategies were compared:
+\begin{description}
+\item[Local:] All the jobs are submitted to the local site only. This strategy was used as a base line for comparison against other strategies.
+\item[Equal CPU load:] Jobs are distributed between nodes with the goal to maintain an equal ratio of job duration per CPU. Each input file is transferred prior to the start of a job. At each node jobs are executed in input order.
+\item[Data transferred by job:] Each CPU pulls a job from the queue when it is idle, then it has to wait for an input transfer before the job execution starts.
+\item[Optimized:] This strategy is based on the model proposed in this paper.
+\end{description}
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[trim =5mm 5mm 5mm 10mm ,clip,width=0.7\textwidth]{pic/makespan_vs_slowdown4.pdf}
+    \caption{Results of simulations for real data production. Three strategies were evaluated and compared to a ideal local production. The
+   optimized solution (our model) clearly provides the highest gain.}
+    \label{fig:makespan_vs_slowdown}
+\end{figure}
+
+The plot at Figure \ref{fig:makespan_vs_slowdown} shows the gain in a makespan delivered by different scheduling policies compared to the job execution at the local site only. The curves shows the performance of the scheduling policies when an overhead of transfer to the remote site increases proportionally to the slowdown factor. When the transfer overhead becomes significant both heuristics (``Equal CPU load'' and ``Data transferred by job'') fail to provide an efficient usage of the remote resources (the makespan improvement goes below zero). Negative makespan improvement means that, in this case, it would be faster to process all the data locally than to distribute it between several sites relying on the heuristic. The proposed global planning approach (Optimized) systematically provides a smaller makespan and adapts to the increase of transfer overheads better then the other simulated  heuristics. It was able to provide a positive gain in makespan by using remote resources even when the transfer overhead is comparable to a job duration.  
+
+\section{Conclusion and future plans}
+In this paper we proposed a model of distributed data production, where all
+the files from a single source has to be processed once and transferred back.
+This model allows planning of WAN, storage and CPU loads using the network
+flow maximization approach. The proposed model will be used in a distributed
+data production planner which is being developed. The planner will enable
+automated and scalable planning and optimization of distributed computations
+which are highly required in data intensive computational fields such as High Energy and Nuclear Physics.
+
+A model for scheduling of data production over Grid was formulated in form of constraint satisfaction problem and solved using constraint programming. 
+The simulations based on data extracted from log files of batch and data management systems of the STAR experiment has shown that the proposed global planning approach systematically provides a smaller makespan and adapts to the increase of transfer overheads better then the other simulated  heuristics.
+The proposed approach can provide an \textit{optimization} and an \textit{automatic adaptation} to fluctuating resources with no need for manual adjustment of a workflow at each site or tuning of heuristics.
+The future development of global planning for data processing in Grid is ongoing. In future we plan to test this approach on problems of larger size (more nodes, CPU's and links) and improve the search performance in order to enable online scheduling in real environment. 
+
+
+\section*{Acknowledgements}
+This work has been supported by the Czech Science Foundation
+(13-20841S, P202$/$12$/$0306),  the MEYS grant CZ.1.07/2.3.00/20.0207 of the European Social Fund (ESF) in the Czech Republic: “Education for Competitiveness Operational Programme” (ECOP) and the Office of Nuclear Physics within the U.S. Department of Energy.  
+
+
+
+
+\bibliography{bibliography}{}
+\bibliographystyle{spmpsci}
+
+		
+
+\end{document}
