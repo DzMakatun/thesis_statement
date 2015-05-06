@@ -48,18 +48,18 @@ constraint programming, Grid, Cloud, data processing , data transferring, data p
 
 
 \section{Introduction}
-The STAR experiment at the Relativistic Heavy Ion Collider (RHIC) studies a primordial form of matter that existed in the universe shortly after the Big Bang. Collisions of heavy ions occur millions of times per second inside the detector, producing tens of petabytes of raw data each year. All the raw data has to be processed in order to reconstruct physical events which are further analyzed by scientists. This process is called data production.  Like any other modern experiment in High Energy and Nuclear Physics (HENP), STAR intends to rely on distributed data processing, making use of several remote computational sites (for some experiments this number can scale up to several hundreds).
+The STAR experiment at the Relativistic Heavy Ion Collider (RHIC) studies a primordial form of matter that existed in the universe shortly after the Big Bang. Collisions of heavy ions occur millions of times per second inside the detector, producing tens of petabytes of raw data each year. All the raw detector data has to be processed in order to reconstruct physical events which are further analyzed by scientists. This process is called \textit{data production}.
+
+Like any other modern experiment in High Energy and Nuclear Physics (HENP), STAR intends to rely on distributed data processing, making use of several remote computational sites (for some experiments this number can scale up to several hundreds).
 
 When running data intensive applications on distributed computational resources long I/O overheads may be observed as access to remotely stored data is performed. Latency and bandwidth can become the major limiting factors for the overall computation performance and can reduce the CPU time\,/\,wall time ratio due to excessive I/O wait.  Widely used data management systems in HENP community (Xrootd, DPM) are focused on providing heterogeneous access to distributed storage and do not consider data pre-placement with respect to available CPUs, job durations or network performance. At the same time job scheduling systems (PBS, Condor) do not reason about transfer overheads when accessing data at distributed storage. For this reason, an optimization of data transferring and distribution across multiple sites is often done manually, using a custom setup for each particular infrastructure \cite{Balewski_2012pa}.
 
-\subsection{Data production}
-\subsection{Previous work}
-Previous collaborative work between BNL (Brookhaven National Laboratory) and NPI/ASCR (Nuclear Physics Institute, Academy of Sciences of the Czech Republic) showed that the global planning of data transfers within the Grid can outperform widely used heuristics such as Peer-to-Peer and Fastest link (used in Xrootd)\cite{Zerola,Makatun}. Those results became the ground for continuation of research and extension of global planning to the entire data processing workflow, i.e., scheduling of CPU allocation, data transferring and  placement at storage.  
-
-In previous, we addressed the problem of efficient data transferring in a Grid environment \cite{Zerola}. % and cache management \cite{Makatun_cache}. 
-Data transfers between $n$~computational sites and $m$~data locations were considered but job scheduling was not covered by that work. In \cite{ACAT_2014} we proposed a constraint programming planner that schedules computational jobs and data transfers in a distributed environment in order to optimize resource utilization and reduce the overall completion time. Since such global scheduling is computationally demanding it should be divided into several stages in order to improve scheduler performance and scalability. A planing of resource load can be completed in the first stage before scheduling file transfers and jobs. In this work we address the problem of data production planning, answering the question how the data should be transferred given the network structure, bandwidth, storage and CPU slots available. This will allow local schedulers to process jobs and have CPUs busy all the time while not exceeding disk and network capacities.
+Previous collaborative work between BNL (Brookhaven National Laboratory) and NPI/ASCR (Nuclear Physics Institute, Academy of Sciences of the Czech Republic) showed that the global planning of data transfers within the Grid can outperform widely used heuristics such as Peer-to-Peer and Fastest link (used in Xrootd)\cite{Zerola}. This concept was later complimented with usage of caching \cite{Makatun_cache}. The comparison and selection of the most appropriate caching policies for the data access pattern in HEP is described in Section \ref{Cache}. 
+ 
+Those results became the ground for continuation of research and extension of global planning to the entire data processing workflow, i.e., scheduling of CPU allocation, data transferring and  placement at storage. In Section \ref{CP_approach} we propose a constraint programming planner that schedules computational jobs and data transfers in a distributed environment in order to reduce the overall completion time. Since such global scheduling is computationally demanding it should be divided into several stages in order to improve scheduler performance and scalability. A planing of resource load can be accomplished in the first stage before scheduling particular file transfers and jobs. In Section \ref{Network_flow} we address the problem of data production planning, answering the question how the load should be distributed over resources and how the data should be transferred given the network structure, bandwidth, storage and CPU slots available. This will allow local schedulers to process jobs and have CPUs busy all the time while not exceeding disk and network capacities.
 
 \section{Problem analysis}
+\subsection{Usecases}
 Long I/O overheads when accessing data from remote site can significantly reduce the application's CPUtime/WallTime ratio \cite{HorkyACAT,Betev}. For this reason, when setting up a data production at remote sites one has to consider the network throughput, available storage and CPU slots. When there are few remote sites involved in the data processing, the load can be tuned manually and simple heuristic may work, but, as the number of sites grows and the environment is constantly changing (site outage, fluctuations of network throughput and CPU availability), an automated planning of workflows becomes needed. 
 
 As an intuitive example of optimization let us consider a situation when a given dataset can be either processed locally, or can be sent to a remote site. Depending on transfer overhead it may appear to be optimal to wait for free CPU slots at the local site and process all the data there, or send a smaller fraction of the dataset for remote processing. Commonly used heuristics such as ``\textit{Pull a job when a CPU slot is free}'' will not provide an optimization with respect to an overall processing makespan.  
@@ -83,11 +83,7 @@ Another example arises from a workflow optimization which was done for inclusion
 
 Scheduling of computational jobs submitted by users (user analysis) has even more degrees of possible optimization: selection between multiple data sources, grouping of jobs that use the same input files. This case becomes even more complex due to a poor predictability of the user analysis jobs. However,  the main question for optimization remains the same as for the examples above: How to distribute a given set of tasks over the available set of resources in order to complete all the tasks within minimal time?
 
-
-
-
-\subsection{Existing solutions}
-\subsection{Related works}
+\subsection{Related work}
 Optimization of data intensive applications in Grid was studied
 in~\cite{Globus_scheduler}. In this work an optimization was achieved by
 replication of highly used files to more sites while the jobs were executed
@@ -99,10 +95,11 @@ bandwidth was proposed in~\cite{Trees}. The network structure of the Grid was
 modeled as a tree and all the files were assumed to be of the same size and
 processing time. In our study we do not limit the network topology to trees,
 and assume fluctuations of job parameters. 
-\subsection{Usecases}
 
-\section{Problem formalization}
-\subsection{Network flow maximization approach}
+
+
+\section{Resource load planning}
+\label{Network_flow}
 Due to a data level of parallelism a typical workflow of HENP computation
 consists of independent jobs using one CPU, one input and one output file. We
 assume there is a local scheduler running at each site, which picks a new
@@ -136,7 +133,7 @@ and a set of edges $e\in E$ with their capacities $cap(e)$. A solution that
 assigns a nonnegative integer number $f(e)$ to each edge $e \in E$ can be
 found in polynomial time with known algorithms.
 
-\subsubsection{Input flow planning}
+\subsection{Input flow planning}
 In order to transform a given graph of a Grid into a capacitated $\{s,t\}$
 network for an input transfer problem we add two dummy vertexes: a source $s$
 and a sink $t$. Next we add  dummy edges $d_{i} \in D$ from each computational
@@ -164,7 +161,7 @@ transferred to the node $i$ without exceeding its storage capacity $Disk_{i}$
 and $k_{0}$ is the total size of available input files at $c_{0}$. We denote
 the solution for the input transfer problem as $f^{in}(e)$.
 
-\subsubsection{Output flow planning}
+\subsection{Output flow planning}
 For transfer of output files we use a similar transformation, but swap the
 source $s$ and the sink $t$, change the direction of dummy edges and redefine
 capacities of dummy edges. In this case the capacity $\overline{k}_{0}$ of the
@@ -188,7 +185,7 @@ cap(e) = \left\{
 %
 We denote the solution for the output transfer problem as $f^{out}(e)$.
 
-\subsubsection{Calculating capacity of dummy edges}
+\subsection{Calculating capacity of dummy edges}
 \label{dummycap}
 Let us consider data production jobs which perform the same type of processing on the same type of files.
 Duration $p_{j}$ of job $j$  processing input file of size $InSize_{j}$ at node $i$ is
@@ -300,7 +297,7 @@ Let us consider two distinct computational nodes $c_{1}$ and $c_{2}$ connected b
 If we have an optimal solution for the input flow maximization problem $f^{in}(e)$ we can produce from it an optimal solution for the output flow maximization problem $f^{out}(e)$ such that for any opposite pare of links $l_{1}=(c_{1},c_{2})$ and $l_{2}=(c_{2},c_{1})$ the output flow is $f^{out}({l_{1}}) = \beta \cdot f^{in}({l_{2}})$ and since $\beta < 1$ the capacity of links is not exceeded  $f^{out}({l_{1}}) =\beta \cdot f^{in}(l_{2}) \leq f^{in}(l_{2}) \leq cap(l_{2}) = cap(l_{1})$. Due to symmetry of the two problems, this solution  $f^{out}(e)$ is also the maximum flow for the output transfer problem. Combining this with what was proven in previous paragraph, if $f^{in}({l_{1}}) > 0$ then $f^{in}({l_{2}}) = 0$ and thus $f^{out}({l_{1}}) = 0$. This means that in the optimal solution input and output files are never transferred over the same link. And thus, maximum flow problems for input and output transfers can be solved independently. 
 
 
-\subsubsection{Solving Procedure}
+\subsection{Solving Procedure}
 \label{solve}
 It can be proven that the maximum flow problems for input and output transfers
 can be solved independently under assumptions: (a) all the real network links
@@ -326,7 +323,8 @@ To conclude, this procedure is expected to compute feasible data transfers
 such that CPUs in Grid are busy with computational jobs while not exceeding 
 local disk capacities.
 
-\subsection{Constraint programming approach}
+\section{Constraint programming approach}
+\label{CP_approach}
 Problems of scheduling, planning and optimization are being commonly solved with the help of Constraint Programming (CP) \cite{CP}. It is a form of declarative programming which is widely used in scheduling, logistics, network planning, vehicle routing, production optimization etc... In the next sections we will introduce our Constraint Satisfaction Problem (CSP) formulation for a data production at multiple sites and provide a simulation-based evaluation of the proposed model.
 
 We will introduce only the core concepts of our CSP formulation and search algorithms, omitting  detailed mathematical expressions.
@@ -342,7 +340,7 @@ Our goal is to create a schedule of jobs at computational sites, transfers over 
 \end{description} 	 
  In our model we assume that a network link can be modeled as an unary resource with no loss of generality. The measurements in \cite{Zerola} have shown, that  a sequential transfer of a set of files does not require more time than a parallel transfer of the same set of files over the same link.
 
-\subsubsection{Search overview}
+\subsection{Search overview}
 We use an incomplete search which can provide a suboptimal solution of required quality within a given time limit because the final goal is to create a planner that can process requests online.
 For a better search performance the overall problem is divided into two subproblems and the search is performed in two stages: 
 \begin{enumerate}
@@ -361,7 +359,7 @@ For a better search performance the overall problem is divided into two subprobl
 	\end{enumerate}
 \end{enumerate}
 
-\subsubsection{Constraints at the planning stage}
+\subsection{Constraints at the planning stage}
 
 At the planning stage we have to assign a transfer path for an input and an output file of each job which can be defined by the following constraints (see Figure \ref{fig:path}):
 \begin{description}
@@ -375,7 +373,7 @@ At the planning stage we have to assign a transfer path for an input and an outp
 \end{description}
 In addition, we use constraints for loop elimination similarly as it is described in \cite{Rudova}.
 
-\subsubsection{Constraints at the scheduling stage}
+\subsection{Constraints at the scheduling stage}
 At the scheduling stage the problem is to assign a start time for each task. The following constraints on order of tasks are implemented:
 \begin{itemize}
 \item An outgoing transfer of a file from a node can start only after an incoming transfer to that node is finished.  The first transfer of an input file from its source and the first transfer of an output file from the processing node are exceptions from this constraint.
@@ -404,7 +402,7 @@ Cumulative constraints are widely used in Constraint Programming for description
     \end{center}
 \end{table}
 
-\section{Simulations}
+\subsection{Simulations}
 The constraint satisfaction problem was implemented using MiniZinc \cite{MiniZinc} and Gecode \cite{Gecode} was used as a solver. The timelimit was set to 3 minutes for both planning and scheduling stages. The simulations were running under Windows 8 64-bit on a computer with Intel i5 (4 cores) 2.50 GHz processor and 6 GB of memory installed. The Gecode solver was running in a parallel mode using 4 threads. 
 
 The simulated environment consisted of 3 nodes: a central storage HPSS ($cpu_{HPSS}=0$) which was the single source for input files and the single destination for output files, a local processing site and a remote processing site. The slowdown of links between the central HPSS and the local site was set to 0, which means that transfer overheads to/from the local site are negligible comparing to a job duration. The slowdown of the links to/from the remote site was increasing in each simulation proportionally to a slowdown factor. The parameters of jobs were taken from logging system of the STAR experiment's data production at computational site KISTI (Korea Institute of Science and Technology Information) \cite{KISTI}. The average job duration was 3,000 minutes and average time of transfer was 5 and 10 minutes to/from the remote site respectively (in the simulations where the slowdown factor $= 1$). Then, in further simulations the transfer times increase proportionally to the slowdown factor. In the simulated environment 80\% of CPUs were available at the local site and 20\% at the remote site. 2,000 of jobs were scheduled stepwise by subsets (chunks) of 200. Storage constraints were not considered in these simulations. Four different scheduling strategies were compared:
@@ -426,14 +424,173 @@ The simulated environment consisted of 3 nodes: a central storage HPSS ($cpu_{HP
 
 The plot at Figure \ref{fig:makespan_vs_slowdown} shows the gain in a makespan delivered by different scheduling policies compared to the job execution at the local site only. The curves shows the performance of the scheduling policies when an overhead of transfer to the remote site increases proportionally to the slowdown factor. When the transfer overhead becomes significant both heuristics (``Equal CPU load'' and ``Data transferred by job'') fail to provide an efficient usage of the remote resources (the makespan improvement goes below zero). Negative makespan improvement means that, in this case, it would be faster to process all the data locally than to distribute it between several sites relying on the heuristic. The proposed global planning approach (Optimized) systematically provides a smaller makespan and adapts to the increase of transfer overheads better then the other simulated  heuristics. It was able to provide a positive gain in makespan by using remote resources even when the transfer overhead is comparable to a job duration.  
 
+\section{Enabling caching}
+\label{Cache}
+Efficient usage of available cache space is important for transferring and accessing data in computational grids. Though, a great variety of caching algorithms is known, a study is needed to evaluate which one can deliver the best performance in data access considering the realistic demand patterns.
+ 
+Cache cleaning algorithms can be applied to keep in the cache of data-transfer tools files that may be reused. The size of those cache is small (several percent of the entire dataset)  and the clean up has to take place regularly to make space for further transfers. Another task can, for example, be to delete a part of local data replica if no longer in use or requested. The problem posed by cache cleanup is to select and delete files which are the least likely to be used again. An investigation to find the most appropriate algorithm is required.
+
+In this study, all the caching algorithm were implemented following the concept known as "water-marking". Water-marking is an approach where  thresholds are set for the cache cleanup starts and stops. It considers the current disk space occupied by the data in cache and the high-mark and the low-mark for cache size are externally set up and can be adjusted as needed. When the used cache size exceeds the high-mark, the cache clean-up starts, and files are deleted until the used cache size gets below the low-mark. The time interval between clean-ups depends on combination of high/low marks, cache size and data-flow. With watermarking concept more computational  demanding algorithms can be implemented as the cleanup may be independent of the data transfers.
+
+\subsection{Access patterns}
+Several data  access patterns were extracted from log files of data  management systems  at  sites of HEP/NPP  experiments in order to simulate caching.   Three  different  access patterns were used as input for our simulations:
+\begin{itemize}
+	\item[]\textbf{STAR1:} the pattern was extracted from Xrootd \cite{Xrootd} logs taken from the STAR experiment's Tier-0 site of RHIC Computing Facility at Brookhaven National Laboratory  (RCF@BNL), it consist of records made during a 3 months period (June-August 2012) of all datasets available in STAR.
+	\item[]\textbf{STAR2:} extracted from the same data management system, but of records made during a 7 months period (August 2012 - February  2013) under similar conditions.
+	\item[]\textbf{GOLIAS} farm is part of regional computing center for particle physics at the Institute of Physics (FZU) in Prague, and is part of a Tier-2 site for the CERN/ATLAS experiment. The facility also performs data processing for another experiment - AUGER, which makes less than  1\% of the total requests. The pattern was extracted from DPM \cite{DPM} logs for a 3 months period (November 2012 - February  2013).
+\end{itemize}
+
+The usage of access patterns corresponding to different time periods and experiments helps to verify the results of our simulations. As input of our simulations, we tried to focus on a few characteristic access patter. The key parameters we came up with for the three access patterns are given in Table \ref{patterns}. Both STAR access patterns have similar parameters. It is noteworthy to mention that the first one was taken right before the Quark Matter 2012 conference and the second one, right after. This is important as the access to data is intensified before a conference and without verification, it would be doubtful if our findings would be stable across time. The  number  of files requested  only once during  the period, is less than  10\% in both cases. 
+
+The FZU/GOLIAS access pattern is taken from another experiment with different data-storage structure, DPM is used here within a Tier-2 data access context (user analysis). This access pattern is much less uniform and differs from the other  two:  the size of files is not explicitly limited and can reach 18 GB, the number of requests for a file varies from 1 up to 94260, with an average 5, while it varies from 1 to 203 for the STAR patterns. 44\% of files were requested  only once
+
+Our analysis is not sensitive to the particular Data Management system, (XRootD or DPM), further we explain  differences in the access patterns with specifics of experiment and role of the cluster in the system (tier level).
+
+
+\begin{centering}
+\begin{table}
+\caption{Summary of three user access patterns used as input for simulations. The selection of two time sequence in STAR and one from a different experiment aims at verifying stability of our result and findings.}
+\centering
+\begin{tabular}{lllll}
+\hline
+ &  &STAR1 & STAR2  & GOLIAS  \\ \hline
+Time period& months & 3 & 7 & 3 \\ 
+Number of requests&$ \times 10^{6} $& 33 & 52 & 21 \\ 
+Data transferred& $ PB $ & 50 & 80 & 10 \\ 
+Maximal number of requests for one file& $- $ &  192 & 203  & 94260 \\ 
+Average number of requests per file& $- $ & 19 & 15 & 5 \\ 
+Number of unique files& $\times 10^{6} $ & 1.8 & 1.7  & 3.8 \\ 
+Total size of dataset& $PB $ & 1.45 & 2 & 1 \\
+Maximal file size & $GB $ & 5.3 & 5.3 & 18 \\ 
+Average file size & $ GB $& 0.8 & 1  & 0.3 \\ 	
+\hline
+\end{tabular}	
+\label{patterns}
+\end{table}
+\end{centering}
+
+
+\subsection{Cache simulation}
+The efficiency of caching can be estimated by two quantities, the cache hits $H$ and cache hits per megabyte of data $H_{d}$ from here on referred to as \textit{cache data hits}:
+
+\begin{equation}
+\label{hits}
+H =\frac{N_{cache}}{N_{req}-N_{set}}
+\end{equation}
+
+\begin{equation}
+\label{hitsBeq}
+H_{d} = \frac{S_{cache}}{S_{req}-S_{set}}
+\end{equation}
+where $N_{req}$ is the total number of requests, $S_{req}$ -the total amount of transferred data in bytes, $N_{set}$ -the number of unique files witch were requested at least ones during the considered period, $S_{set}$ - the total size of those unique files in bytes, $N_{cache}$ - the number of files transferred from cache, $S_{cache}$ - the amount of data transferred from cache in bytes.
+
+By maximizing the cache hits $H$ one reduces the number of files transferred from external sources and thus reduces the overall make-span due to transfer startup overhead for each file. By maximizing the cache data hits $H_{d}$ one reduces the network load, since more data is reused from the local cache.
+
+If the access pattern is completely random, the expected cache hit and cache data hits would be equal to $cache~size/storage~size$, so it can be useful to compare the actual cache performance to this estimation. 
+
+Altogether 27 different caching algorithms were simulated. But the majority of studied algorithms did not bring any improvements over the simplest one (FIFO). Only the algorithms that appeared to be the most efficient are discussed in this paper: 
+\begin{itemize}
+\item[\textbf{-}]\textbf{First-In-First-Out (FIFO)}: evicts files in the same order they entered the cache. Performance of this trivial algorithm  provide a good comparison benchmark against  more sophisticated ones  which can demand  significant computational resources.
+\item[$\bigcirc $]\textbf{Least-Recently-Used (LRU)}: evicts the set of files which were not used for the longest period of time.
+\item[\begin{Large}$\bullet $\end{Large}]\textbf{Least-Frequently-Used (LFU)}: evicts the set of files which were requested less times since they entered the cache.
+\item[$\bigstar $] \textbf{Most Size (MS)}: evicts the set of files which have the largest size.
+\item[\textbf{+}]\textbf{Adaptive Replacement Cache (ARC)}\cite{ARC}: splits cached files into two lists: L1 - files with $access~count=1$, and L2 - files with $access~count>1$. LRU is then applied to both list, the self adjustable parameter $p = cache~hits~in~L1 / cache~hits~in~L2$ defines the number of cached files in each list. The general idea is to invest more into the list which delivers more hits.
+\item[$\ast $]{\textbf{Least Value based on Caching Time (LVCT)}}\cite{Cache in Grid}: Deletes files with the smallest value of the  Utility Function:
+\begin{equation}
+Utility Function = \frac{1}{Caching Time \times File Size}
+\end{equation}   
+where \textbf{Caching Time} of a file F is total size of all files accessed after the last request for the file F.
+\item[$\bigtriangledown $]{\textbf{Improved-Least Value based on Caching Time (ILVCT)}}\cite{Improved-Least Value based on Caching Time}: Deletes files with the smallest value of the  Utility Function:
+\begin{equation}
+Utility Function = \frac{1}{Number Of Accessed Files \times Caching Time \times File Size}
+\end{equation}   
+where \textbf{Caching Time} is the same as for LVCT and \textbf{Number Of Accessed Files}  is a number of files requested after the last request for selected file. 
+\end{itemize}
+
+
+\subsubsection{Simulation results}
+Three series of simulations with three access patterns were performed for each algorithm (90 simulations in total for each algorithm): 
+\begin{itemize}
+\item 10 simulations with cache size 1-90 \% of storage with fixed low-mark 75\% and high-mark 95\%. Those simulations aim to understand what would happen if we have large storage cache. Those cases are aligned with a DPM and Xrootd use where most (if not all) the dataset(s) are in the system.
+\item 10 simulations with cache size 1.2 - 0.0025\% of storage with fixed low-mark 75\% and high-mark 85\%. This high-mark was selected in order to leave enough margin (15\%) in case when a large file is requested at the moment when the cache is almost full. We used those simulations to understand the behavior of cache cleanup if the cache size is by several orders less than the dataset size. This is in fact a most common case for transfer cache on data transfer nodes.
+\item 10 simulations with fixed cache size 10\% of storage,fixed high-mark 95\% and  variable low mark  within 0-90\%. We performed those simulations to better understand the effect of data retention on cache (delete the least in hope of re-use).
+\end{itemize}
+
+In order to compare one algorithm against another an average improvement can be calculated in a following way:
+\begin{equation}
+Average~improvement = \frac{\sum^{n}_{i=1}\frac{value2_{i}-value1_{i}}{value1_{i}}}{n},
+\end{equation}
+where $n$ is the total amount of simulations with equal parameters for both algorithms, $i$ is the number of the simulation,$value1$ - cache hits or cache data hits of a reference algorithm (FIFO), $value2$ - cache hits or cache data hits of a compared algorithm.
+
+Table \ref{results} contains the results of comparison of all the algorithms represented in this paper against FIFO. 60 values for each algorithm were taken from results of simulation series 1 and 2 in order to calculate the average improvement. According our results, the LFU algorithm does not bring any improvement over FIFO due to its well known flaw - it accumulates files which were popular for a short period of time, and those files prevent newer ones from staying in cache. The ARC algorithm was developed as an improvement to LRU, and not surprisingly, it outperforms LRU by $\sim$5\% in cache hits and $\sim$7\% in cache data hits. Therefore, LFU and LRU algorithms could be excluded from the further analysis in our case studies.
+
+The graphical detailed results of simulations for all 3 series are given at Figures \ref{plots:big}-\ref{plots:low}. The performance of FIFO and 3 algorithms appeared to be the most efficient (MS, ACR and LVCT) is presented at the plots. 
+
+Difference between Tier-2 and Tier-0 access patterns leads to distinct cache performance. Only the data dedicated for the ongoing analysis is placed at the Tier-2 site, while at the Tier-0 site all the experimental data is stored. As a result -- the access pattern at the Tier-2 site has stronger access locality. STAR1 and STAR2 access patterns correspond to Tier-0 site and GOLIAS to a Tier-2 site.  Thus, any particular algorithm at the plots delivers higher cache hits and cache data hits for GOLIAS access pattern than for STAR1 and STAR2.  
+
+
+The behavior of algorithms is similar within each dataset that is, their respective performance ordering is the same. This observation implies that if one of the algorithm appears to be most efficient for one of the datasets it is also the most efficient for the other datasets. This statement is also true for the rest of simulated algorithms not present on our figure. Though the communities represented by the STAR and GOLIAS access patterns are somewhat similar, this result is slightly surprising as our case studies represent two time sequence within the same usage and totally uncorrelated experiments. It would be interesting to study those algorithms in a different experimental context (outside the HEP/NPP communities) but this study is outside the scope of our paper. 
+
+The MS algorithm has shown outstanding cache hits, but the lowest cache data hits. At the same time the LVCT has cache hits comparable to the MS while cache data hits are 2\% improved over the FIFO. This algorithm could be an optimal when the cache hits is the target optimization parameter. The ARC algorithm has shown the highest cache data hits for studied access patterns.
+
+The dependence of algorithms performance on low mark is presented at Figure \ref{plots:low}. With higher low mark the number of clean-ups increases and that is why the difference between algorithms becomes more notable. Performance of efficient algorithms (FIFO, LRU, ARC and LVCT) increases steadily with the low mark. One should be careful when setting up a cache low mark at a particular site, since a higher low mark can increase cache performance significantly, but at the same time it can result in running cache clean-ups too often, consuming significant computational resources (and potentially increasing the chance to interfere with data transfers hence, degrading transfer performances if delete/writes/read overlap).
+
+
+
+        \begin{figure}
+                \centering
+                \includegraphics[width=\textwidth, natwidth=610,natheight=642]{pic/big-basic.pdf}
+                \caption{Results of simulation. Performance of algorithms for cache of larger size can be compared. For all of the simulations on this plot the following parameters were fixed: low mark = 0.75, high mark = 0.95 }
+                \label{plots:big}
+        \end{figure}%
+
+        \begin{figure}
+                \centering
+                \includegraphics[width=\textwidth, natwidth=610,natheight=642]{pic/tiny-basic.pdf}
+                \caption{Results of simulation. Performance of algorithms for cache of smaller size can be compared. For all of the simulations on this plot the following parameters were fixed: low mark = 0.75, high mark = 0.85}
+                \label{plots:tiny}
+        \end{figure}
+
+        \begin{figure}
+                \centering
+                \includegraphics[width=\textwidth, natwidth=610,natheight=642]{pic/low-basic.pdf}
+                \caption{Results of simulation: dependence of cache performance on low mark. For all of the simulations on this plot the following parameters were fixed: cache size / storage size = 0.1, high mark = 0.95}
+                \label{plots:low}
+        \end{figure}
+
+
+\begin{table}
+\caption{Average improvement of algorithms over FIFO.}
+\centering
+\begin{tabular}{lrr}
+\hline
+Algorithm & cache hits & cache data hits\\ \hline
+MS & \textbf{116} \% & -20 \% \\ 
+LRU & 8 \% & 5 \% \\ 
+LFU & -27 \% & -18 \% \\ 
+ARC & 13 \% & \textbf{11} \%\\ 
+LVCT & \textbf{86} \%& 2 \%\\ 
+ILVCT & \ 28 \%& 2 \%\\ 
+\hline
+\end{tabular}	
+
+\label{results}
+\end{table}
+
+
+\subsection{Selection of a caching policy}
+Performance of cache algorithms implemented with watermarking concept was simulated for a wide range of cache sizes and low marks. Three access patterns from Tier-0 and Tier-2 sites of 2 different experiments were used as input for simulations.
+Regardless of the cache size, Tier-level and specificity of experiment the LVCT and ARC appeared to be the most efficient  caching algorithms for the communities we investigated. While we found the stability of relative  algorithms' performance surprising at first, we attribute this result to an access pattern which is intrinsically similar in nature.
+An extension of this work could be the investigation of this result in a different experiment context which is a work beyond our initial goal. LVCT and ARC could certainly be safely implemented in tools such as RIFT.
+\begin{itemize}
+	\item If the goal is to minimize makespan due to a transfer startup overhead the LVCT algorithm should be selected.
+	\item If the goal is to minimize the network load the ARC algorithm is an option.
+\end{itemize}
+
+
+
 \section{Conclusion and future plans}
-In this paper we proposed a model of distributed data production, where all
-the files from a single source has to be processed once and transferred back.
-This model allows planning of WAN, storage and CPU loads using the network
-flow maximization approach. The proposed model will be used in a distributed
-data production planner which is being developed. The planner will enable
-automated and scalable planning and optimization of distributed computations
-which are highly required in data intensive computational fields such as High Energy and Nuclear Physics.
+In this paper we proposed a model of distributed data production, where all the files from a single source has to be processed once and transferred back. This model allows planning of WAN, storage and CPU loads using the network flow maximization approach. The proposed model will be used in a distributed data production planner which is being developed. The planner will enable automated and scalable planning and optimization of distributed computations which are highly required in data intensive computational fields such as High Energy and Nuclear Physics.
 
 A model for scheduling of data production over Grid was formulated in form of constraint satisfaction problem and solved using constraint programming. 
 The simulations based on data extracted from log files of batch and data management systems of the STAR experiment has shown that the proposed global planning approach systematically provides a smaller makespan and adapts to the increase of transfer overheads better then the other simulated  heuristics.
