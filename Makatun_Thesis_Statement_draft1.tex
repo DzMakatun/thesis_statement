@@ -3,6 +3,7 @@
 %% Kodovani a fonty
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+\usepackage{url}
 
 %% AMS balicky
 \usepackage{amsmath,amsthm,amssymb}
@@ -52,7 +53,7 @@ The STAR experiment at the Relativistic Heavy Ion Collider (RHIC) studies a prim
 
 Like any other modern experiment in High Energy and Nuclear Physics (HENP), STAR intends to rely on distributed data processing, making use of several remote computational sites (for some experiments this number can scale up to several hundreds).
 
-When running data intensive applications on distributed computational resources long I/O overheads may be observed as access to remotely stored data is performed. Latency and bandwidth can become the major limiting factors for the overall computation performance and can reduce the CPU time\,/\,wall time ratio due to excessive I/O wait.  Widely used data management systems in HENP community (Xrootd, DPM) are focused on providing heterogeneous access to distributed storage and do not consider data pre-placement with respect to available CPUs, job durations or network performance. At the same time job scheduling systems (PBS, Condor) do not reason about transfer overheads when accessing data at distributed storage. For this reason, an optimization of data transferring and distribution across multiple sites is often done manually, using a custom setup for each particular infrastructure \cite{Balewski_2012pa}.
+When running data intensive applications on distributed computational resources long I/O overheads may be observed as access to remotely stored data is performed. Latency and bandwidth can become the major limiting factors for the overall computation performance and can reduce the CPU time\,/\,wall time ratio due to excessive I/O wait.  Widely used data management systems in HENP community (Xrootd, DPM) are focused on providing heterogeneous access to distributed storage and do not consider data pre-placement with respect to available CPUs, job durations or network performance. At the same time job scheduling systems (PBS, Condor) do not reason about transfer overheads when accessing data at distributed storage. For this reason, an optimization of data transferring and distribution across multiple sites is often done manually, using a custom setup for each particular infrastructure \cite{Balewski}.
 
 Previous collaborative work between BNL (Brookhaven National Laboratory) and NPI/ASCR (Nuclear Physics Institute, Academy of Sciences of the Czech Republic) showed that the global planning of data transfers within the Grid can outperform widely used heuristics such as Peer-to-Peer and Fastest link (used in Xrootd)\cite{Zerola}. This concept was later complimented with usage of caching \cite{Makatun_cache}. The comparison and selection of the most appropriate caching policies for the data access pattern in HEP is described in Section \ref{Cache}. 
  
@@ -67,21 +68,36 @@ As an intuitive example of optimization let us consider a situation when a given
 Another example arises from a workflow optimization which was done for inclusion of the ANL (Argonne National Laboratory) computational facility into the Cloud based data production of the STAR experiment \cite{Balewski}. In this case, and due to the lack of local storage at the site for buffering, the throughput of a needed direct on-demand network connection between BNL (New York) and ANL (Illinois) was not sufficient to saturate all the available CPUs at the remote site. An optimization was achieved by feeding CPUs at ANL from two sources: directly from BNL and through an intermediate site NERSC (National Energy Research Scientific Computing Center, California) having large local caching and with better connectivity to ANL. This example illustrates an efficient use of indirect data transfers which cannot be guessed by simple heuristics. A general illustration of distributed resources used for data production and their interconnection is given at Figure \ref{fig:simulated grig}.
 
 \begin{figure}[h]
-\begin{minipage}{.49\textwidth}
 \centering
-    \includegraphics[trim =30mm 30mm 30mm 30mm ,clip, width=.5\textwidth]{pic/Data_production_general_bw2.pdf}
+    \includegraphics[trim =30mm 30mm 30mm 30mm ,clip, width=.4\textwidth]{pic/Data_production_general_bw2.pdf}
     \caption{Schema of data production in the Cloud.}
     \label{fig:simulated grig}
-\end{minipage}\hspace{1pc}%
-\begin{minipage}{.49\textwidth}
+\end{figure}
+
+\begin{figure}[h]
 \centering
-    \includegraphics [trim =30mm 35mm 30mm 40mm ,clip, width=.49\textwidth]{pic/link_selection_bw3.pdf}	
+    \includegraphics [trim =30mm 35mm 30mm 40mm ,clip, width=.4\textwidth]{pic/link_selection_bw3.pdf}	
     \caption{An example of a transfer path. Illustration for constraints 1-4 in section \ref{path}.  }
     \label{fig:path}
-\end{minipage} 
 \end{figure}
 
 Scheduling of computational jobs submitted by users (user analysis) has even more degrees of possible optimization: selection between multiple data sources, grouping of jobs that use the same input files. This case becomes even more complex due to a poor predictability of the user analysis jobs. However,  the main question for optimization remains the same as for the examples above: How to distribute a given set of tasks over the available set of resources in order to complete all the tasks within minimal time?
+
+\begin{figure}[h]
+	\begin{center}
+		\includegraphics [trim= 30mm 30mm 30mm 30mm , clip, angle =-90, width=0.7\textwidth]{pic/sites.pdf}
+	\end{center}
+	\caption{Data production Grid of the experiment STAR. Raw data is recovered from central HPSS to NFS storage at RCF and then it is distributed between local and remote sites. Arrows represent network links.}
+	\label{sites}
+\end{figure} 	
+
+\begin{figure}[h]
+	\begin{center}
+		\includegraphics [trim= 30mm 30mm 30mm 30mm , clip, angle =-90, width=0.7\textwidth]{pic/real_network.pdf}
+	\end{center}
+	\caption{Input transfer planning: transformation of Data production Grid into   capacitated $\{s,t\}$ network for a flow maximization problem. Dummy vertexes (a source and a sink) are added. Each computational site is connected to the sink by a dummy edge. The source is connected to the NFS at RCF via dummy edge. The dummy edges are used in order to express constraints on network flow imposed by storage capacity and number of CPUs at each site.  Central HPSS is removed from consideration.}
+	\label{real_network}
+\end{figure} 
 
 \subsection{Related work}
 Optimization of data intensive applications in Grid was studied
@@ -134,6 +150,16 @@ assigns a nonnegative integer number $f(e)$ to each edge $e \in E$ can be
 found in polynomial time with known algorithms.
 
 \subsection{Input flow planning}
+\label{inproblem}
+
+\begin{figure}[h]
+	\begin{center}
+		\includegraphics [trim= 30mm 20mm 30mm 30mm , clip, angle =-90, width=0.7\textwidth]{pic/network_general.pdf}
+	\end{center}
+	\caption{Data production Grid represented as an capacitated $\{s,t\}$ network for input transfer planning (general case). $c_{0}$ is a central NFS storage (Tier-0), $c_{i}$ are computational nodes (where $i>0$), $l_{j}$ are network links, $d_{i}$ are dummy edges from computational nodes to the sink $t$, $q_{0}$ is a dummy edge leading from the source $s$ to the $c_{0}$. }
+	\label{network_general}
+\end{figure} 
+
 In order to transform a given graph of a Grid into a capacitated $\{s,t\}$
 network for an input transfer problem we add two dummy vertexes: a source $s$
 and a sink $t$. Next we add  dummy edges $d_{i} \in D$ from each computational
@@ -162,6 +188,15 @@ and $k_{0}$ is the total size of available input files at $c_{0}$. We denote
 the solution for the input transfer problem as $f^{in}(e)$.
 
 \subsection{Output flow planning}
+\label{outproblem}
+\begin{figure}[h]
+	\begin{center}
+		\includegraphics [trim= 30mm 20mm 30mm 30mm , clip, angle =-90, width=0.7\textwidth]{pic/network_general_out.pdf}
+	\end{center}
+	\caption{Data production Grid represented as an capacitated $\{t,s\}$ network for output transfer planning (general case). $c_{0}$ is a central NFS storage (Tier-0), $c_{i}$ are computational nodes (where $i>0$), $l_{j}$ are network links, $\overline{d}_{i}$ are dummy edges from the source $t$ to computational nodes, $\overline{q}_{0}$ is a dummy edge leading from $c_{0}$ to the sink $s$. }
+	\label{general_out}	
+\end{figure}
+
 For transfer of output files we use a similar transformation, but swap the
 source $s$ and the sink $t$, change the direction of dummy edges and redefine
 capacities of dummy edges. In this case the capacity $\overline{k}_{0}$ of the
@@ -330,7 +365,7 @@ Problems of scheduling, planning and optimization are being commonly solved with
 We will introduce only the core concepts of our CSP formulation and search algorithms, omitting  detailed mathematical expressions.
 The following input parameters are necessary to define our CSP.
 \begin{description}
-\item[Computational Grid] (see Figure \ref{fig:simulated grig}) is described by directed weighted graph where nodes are computational sites $c$ with a given number of CPUs $cpu_{c}$ and storage space $disk_{c}$; edges are network links $l$ with weight $slowdown_{l}$ which is the time required to transfer a unit of data ($slowdown_{l}=\frac{1}{throughput_{l}}$). A dedicated storage facility, such as HPSS, can also be modeled as a node with $cpu_{c}=0$.
+\item[Computational Grid] (see Figure \ref{fig:simulated grig}) is described by directed weighted graph where nodes are computational sites $c$ with a given number of CPUs $cpu_{c}$ and storage space $disk_{c}$; edges are network links $l$ with weight $slowdown_{l}$ which is the time required to transfer a unit of data ($slowdown_{l}=\frac{1}{throughput_{l}}$). A dedicated storage facility, such as HPSS \cite{HPSS}, can also be modeled as a node with $cpu_{c}=0$.
 \item[Set of jobs.] Each job $j$ has a $duration_{j}$, it needs one input file of $inputSize_{j}$, produces one output file of $outputSize_{j}$, input file is placed at $inputSourceNodes_{j}$ and output file must be transferred to one of $outputDestinationNodes_{j}$.
 \end{description}
 Our goal is to create a schedule of jobs at computational sites, transfers over links and a placement of files at storages for a given computational Grid and a set of jobs. In order to solve this problem the variables of our model define the \textit{resource selection} and  \textit{timing} of each task:
@@ -444,7 +479,7 @@ The usage of access patterns corresponding to different time periods and experim
 
 The FZU/GOLIAS access pattern is taken from another experiment with different data-storage structure, DPM is used here within a Tier-2 data access context (user analysis). This access pattern is much less uniform and differs from the other  two:  the size of files is not explicitly limited and can reach 18 GB, the number of requests for a file varies from 1 up to 94260, with an average 5, while it varies from 1 to 203 for the STAR patterns. 44\% of files were requested  only once
 
-Our analysis is not sensitive to the particular Data Management system, (XRootD or DPM), further we explain  differences in the access patterns with specifics of experiment and role of the cluster in the system (tier level).
+Our analysis is not sensitive to the particular Data Management system, (Xrootd or DPM), further we explain  differences in the access patterns with specifics of experiment and role of the cluster in the system (tier level).
 
 
 \begin{centering}
@@ -495,12 +530,12 @@ Altogether 27 different caching algorithms were simulated. But the majority of s
 \item[\begin{Large}$\bullet $\end{Large}]\textbf{Least-Frequently-Used (LFU)}: evicts the set of files which were requested less times since they entered the cache.
 \item[$\bigstar $] \textbf{Most Size (MS)}: evicts the set of files which have the largest size.
 \item[\textbf{+}]\textbf{Adaptive Replacement Cache (ARC)}\cite{ARC}: splits cached files into two lists: L1 - files with $access~count=1$, and L2 - files with $access~count>1$. LRU is then applied to both list, the self adjustable parameter $p = cache~hits~in~L1 / cache~hits~in~L2$ defines the number of cached files in each list. The general idea is to invest more into the list which delivers more hits.
-\item[$\ast $]{\textbf{Least Value based on Caching Time (LVCT)}}\cite{Cache in Grid}: Deletes files with the smallest value of the  Utility Function:
+\item[$\ast $]{\textbf{Least Value based on Caching Time (LVCT)}}\cite{Cache_in_Grid}: Deletes files with the smallest value of the  Utility Function:
 \begin{equation}
 Utility Function = \frac{1}{Caching Time \times File Size}
 \end{equation}   
 where \textbf{Caching Time} of a file F is total size of all files accessed after the last request for the file F.
-\item[$\bigtriangledown $]{\textbf{Improved-Least Value based on Caching Time (ILVCT)}}\cite{Improved-Least Value based on Caching Time}: Deletes files with the smallest value of the  Utility Function:
+\item[$\bigtriangledown $]{\textbf{Improved-Least Value based on Caching Time (ILVCT)}}\cite{ILVCT}: Deletes files with the smallest value of the  Utility Function:
 \begin{equation}
 Utility Function = \frac{1}{Number Of Accessed Files \times Caching Time \times File Size}
 \end{equation}   
