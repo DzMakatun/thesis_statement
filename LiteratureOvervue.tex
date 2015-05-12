@@ -1,0 +1,309 @@
+\documentclass[a4paper,10pt]{article}
+%\usepackage{fullpage}
+
+%% Kodovani a fonty
+%\usepackage[utf8]{inputenc}
+%\usepackage[T1]{fontenc}
+%\usepackage[affil-it]{authblk}
+
+%% AMS balicky
+\usepackage{amsmath,amsthm,amssymb}
+
+%% Grafika
+\usepackage{graphicx}
+%\usepackage{caption}
+%\usepackage{subcaption}
+
+
+
+
+\begin{document}
+
+\title{Overview of jobscheduling}
+
+
+\author{Dzmitry Makatun$^{1,3}$, J\'er\^ome~Lauret$^{2}$ and Michal~\v{S}umbera$^{3}$ }
+
+%\address{$^{1}$Faculty of Nuclear Physics and Physical Engineering, Czech Technical University in Prague}
+%\address{$^{2}$STAR, Brookhaven National Laboratory, USA}
+%\address{$^{3}$Nuclear Physics Institute, Academy of Sciences, Czech Republic}
+
+%\ead{makatun@rcf.rhic.bnl.gov} %e-mail
+
+\date{\today}
+
+\maketitle
+\begin{abstract}
+\end{abstract}
+%\tableofcontents
+
+\section{Introduction}
+
+Modern computational clusters tend to have thousands of execution units. In order to make these investments profitable, such clusters must have many users (clients). This leads to a large amount of job submissions that often exceeds the cluster capacity. \cite{FCFS-malleable}
+
+A job scheduling strategy (JSS) is an algorithm that allocates resources to submitted jobs while applying system's administrative policies and priorities. A JSS has to deal with a wide variety of applications, from sequential to highly parallel codes, with execution times that varies from from minutes to days. \cite{FCFS-malleable}
+
+Problem formulation: Given the aggregate of all tasks of multiple jobs in a parallel system, find a spatial and temporal allocation to execute all tasks efficiently. \cite{definition 1999}
+
+For satisfactory scheduling several major principles should be met. First of all, the scheduler must guarantee good performance regarding classical performance related metrics such as low job wait times and slowdowns and high system utilization. At the same time, fairness has shown to be one of the most important factors to keep users satisfied. Therefore the users should be treated in a fair fashion, such that the availible computing power is fairly distributed among them. Last but not least, the predictability, i.e. plunning functionality was found to be very useful as it allows users to better understand when and where their jobs will be executed.  \cite{Rudova 2012}
+
+
+Destribution of storage can significantly influence the performance of computations. Careful optimization and tuning of parameters are required.\cite{Horky ACAT}
+
+If possible, complete data sets should be collected and used to evaluate scheduling algorithms under harder conditions. Their use may narrow the gap between ''ideal world'' of simulations and real-life experience, producing more reliable and realistic experiments. Realistic simulations help to  quickly identify possible weaknesses in the algorithm design, allowing to make them more robust and scalable. \cite{Rudova Experiments w J-sch}
+
+The most popular algorithms for job scheduling are\cite{Rudova Experiments w J-sch}:
+\begin{itemize}
+\item First Come First Served (FCFS)
+\item Conservative backfilling (CONS)
+\item Aggressive (EASY) backfilling (EASY)
+\item Selective backfilling
+\item Tabu search optimization of conservative backfilling (TS)
+\item First-Come-First-Served malleable (FCFS-malleable) 
+\end{itemize}
+
+\section{Job scheduling strategies}
+Scheduling of parallel jobs is usually viewed in terms of a 2D chart with time along one axis and the number of processors along the other axis. Each job can be thought of as a rectangle whose length is the user estimated time and width is the number of processors required. \cite{Backfilling} Estimates of requred time are often imprecise. Usually they are overestimated to prevent job being killed due to overrun. These inacurate runtime estimates can make the schedule corrupted. Typically, gaps are appearing due to earlier jobs completions\cite{Rudova CP schedulling}. This effect is represented at figure \ref{wrong runtime estimates}.
+\begin{figure}
+\begin{center}
+\includegraphics[width=\textwidth]{pic/inacurate_runtime.jpg}
+\caption{Illustration of the effect of inaccurate runtime estimates\cite{Rudova CP schedulling}}
+\label{wrong runtime estimates}
+\end{center}
+\end{figure}
+
+In order to analyze the performance of jobs of different sizes and length in \cite{Backfilling} jobs were grouped into 4 categories: based on runtime - Short(S) vs. Long(L); and the number of processors requested - Narrow(N) vs. Wide(W). The distribution of jobs into these categories (the exact number limits) depends on the workload log analyzed. Such categorization permits to observe consistent trends that are not apparent when only the overall averages for the entire trace are studied.
+
+\subsection{First Come First Served (FCFS)}
+The simplest way to schedule jobs is to use the FCFS policy. This approach suffers from low system utilization \cite{Backfilling}
+\subsection{Conservative backfilling (CONS)}
+Backfilling was proposed to improve system utilization and has been implemented in several production schedulers. Bachfilling works by identifying "holes" in the 2d chart and moving forward smaller jobs that fit those holes, as it is illustrated with figure \ref{backfilling}. With conservative backfill, every job is given a reservation when it enters the system. A smaller job is moved forward in the queue as long as it does not delay any previously queued job. \cite{Backfilling}
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.5\textwidth]{pic/backfilling.jpg}
+\caption{Illustration of the backfilling policy\cite{Rudova CP schedulling}}
+\label{backfilling}
+\end{center}
+\end{figure}
+
+\subsection{Aggressive (EASY) backfilling (EASY)}
+With aggressive backfilling, only the job at the head of the queue has a reservation. A small job is allowed to leap forward as long as it does not delay the job at the head of the queue.There is no consensus on which of these two backfilling schemes is better. Many studies have concluded that the relative effectiveness of different schemes depend on the job mix \cite{Backfilling}. Although, the EASY backfilling enables many more jobs to be backfilled, those jobs (e.g. wide jobs) that do not easily backfill suffer since they might have to wait till they get to the head of the queue before they get a reservation. \cite{Backfilling}
+
+\subsection{Fair backfilling (BF-FAIR)}
+\subsection{Selective backfilling}
+The number of jobs with a reservation is related to their current wait time and slowdown respectively.
+\cite{Backfilling}
+\subsection{Slack-based}
+\subsection{Tabu search optimization of conservative backfilling (TS)}
+Newly arriving jobs are added into the schedule using classical conservative backfilling algorithm. It means that the earliest suitable time slot is found in existing schedule. Such initial schedule is periodically optimized with an optimization algorithm. In each iteration, one random job is selected and removed from its current position and the schedule is compressed. The compression is designed to shift reservations to earlier time slots that could have appear as a result of job removal. During the compression the relative ordering of job start is kept. Next, the removed job is returned to the compressed schedule into the earlies suitable gap and this new schedule is evaluated (with respect to chosen minimization function). If this attempt is successful, which means that the new schedule is better then the initial one, the schedule is updated. Finally, the job is placed into Tabu list so that it cannot be chosen in the next few iterations - and a new iteration of the Tabu search starts. The Tabu list helps to prevent looping.  If in some iteration all jobs are already in the Tabu list, then the list is emptied and another iteration starts. the cycle continues untill the predefined number of iterations or the given time limit is reached. \cite{Rudova 2012}
+\subsection{First-Come-First-Served malleable (FCFS-malleable)}
+The following classification of job flexibility is commonly accepted in the literature [14]: \textit{rigid jobs}, which are compiled to be run with a specific and fixed number of processes; \textit{moldable} jobs can be executed on multiple CPU partition sizes, but once the execution starts, these sizes cannot be modified; \textit{malleable}, if the size of the assigned partition can also be modified during the execution. 
+Moldable and malleable jobs would increase system utilization. However, they are not the common case in production systems. At \cite{FCFS-malleable}  authors present a JSS, called First Come First Served-malleable (FCFS-malleable), that minimizes waiting times by maximizing system utilization no matter the jobs' execution time, nor their flexibility type. The proposed JSS is based on the idea
+of Virtual Malleability.
+
+FCFS-malleable combines FCFS with VM. Applying VM to a job consist on running it on a pool of CPUs with a size less or equal to the number of processes. In the case the number of CPUs is smaller than the number of processes, each CPU will have binded a queue of processes belonging to the same job. The size of this queue is called \textit{multiprogramming level} (MPI).\cite{FCFS-malleable} The operation of this algorithm in comparison with ordinary FCFS and EASY backfilling is illustrated at Figure \ref{FCFS-malleable-figure}. 
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=\textwidth]{pic/FCFS-malleable.pdf}
+\caption{Illustration of the First-Come-First-Served malleable policy\cite{FCFS-malleable}}
+\label{FCFS-malleable-figure}
+\end{center}
+\end{figure}
+
+
+\section{Metrics}
+The high cost of the clusters usually makes user satisfaction the main objective for improving performance of the JSSs.\cite{FCFS-malleable}
+\subsection{Response time and wait time}
+The average response time represents the average time a job spends in the system, i.e., the time from submission to its termination. 
+The average wait time is mean time that the jobs spend waiting before their execution starts. Short wait times prevent the users from feeling that the scheduler "frogot about their jobs".\cite{Rudova 2012} 
+\subsection{Slowdown}
+Slowdown is the ratio of the actual actual response time of the job to the response time if executed without any waiting.\cite{Rudova 2012} 
+Some of the common metrics are used to evaluate the performance of scheduling schemes are the \textbf{average turnaround} time and the \textbf{average slowdown}. The slowdown of a job is defined as follows:
+\begin{equation}
+Slowdown = \frac{WaitTime+RunTime}{RunTime}
+\label{slowdown}
+\end{equation}
+If a job has a very small runtime it often means that the job ended prematurely due to some error. As a result a slowdown can be huge, which may seriously skew the final mean value. Therefore, so called bounded slowdown is often applied, where the minimal job runtime is guaranteed to be greater then some predefined time constant, sometimes called a "threshold of interactivity".However, there is no  general agreement concerning the actual value of this threshold.
+In order to limit the influence of very short jobs (probably the jobs with errors) a threshold on minimal runtime is usually used (10 seconds).
+
+\subsection{Fairness}
+There is no widely accepted standardized metric to measure fairness and different authors use different metrics.
+Of great importance for production job scheduling is issue of fairness. A strict definition of fairness for job scheduling could be that no later arriving job should be started before any earlier arriving job. But such strict approach appears in contradiction with the workload optimization with is based on backfilling.
+In \cite{Backfilling} a "fair-start" time is defind as start time with each under FCFS conservative schedule. It is defined as earliest possible start time the job would have received under FCFS-Conservative if the scheduling strategy were suddenly changed to strict FCFS (no backfill) at the instant the job arrived. The fair-slowdown is then defined as:
+ \begin{equation}
+FairSlowdown=\frac{FairStartTime-QueueTime+RunTime}{RunTime}
+\label{fair slowdown}
+\end{equation}
+
+Another metric measures to what extent each job was able to receive its "share" of resources. The basic idea is that each job "deserves" $1/n^{t}$ of the resources, where $n^{t}$ is the number of jobs present in the system at the given time t. The "unfairness" is computed by comparing the resources consumed by a jib with the resources deserved by the job.\cite{Rudova 2012} 
+
+Fairness is usually understood and represented as a job related metric, meaning that every job should be served in a fair fashion with respect to other jobs. But there could also be another understanding of fairness, i.e. distribution of resources between users. In work \cite{Rudova 2012} authors focus on fair performance to different users of the system as well. There fore, they apply in their work a well known fair-share principle with respect to different users of the system. Fair-share tries to minimize the differences among the normalized mean wait time of all users. Let $o$ be a given user (job owner) in the system and $JOBS_{o}$ be the set containing jobs of user $o$. Let $r_{j}$and $S_{j}$ denote the arrival time and start time of diven job $j$ respectively. Then the \textit{normalized user wait time} ($NUWT_{o}$)for each user $o$ is calculated as shown by Formula \ref{NUWT}.
+
+ \begin{equation}
+NUWT_{o}=\frac{TUWT_{o}}{TUSA_{o}}
+\label{NUWT}
+\end{equation}
+
+ \begin{equation}
+TUWT{o}=\sum\limits_{j \in JOBS_{o}}^{} (S_{j}-r_{j}) 
+\label{TUWT}
+\end{equation}
+
+ \begin{equation}
+TUSA_{o}=\sum\limits_{j \in JOBS_{o}}^{} (p_{j} \cdot usage_{j})
+\label{TUSA}
+\end{equation}
+
+Normalized user wait time ($NUWT_{o}$) \textit{is the total user wait time} ($TUWT{o}$ in Formula \ref{TUWT}) divided (normalized) by the so called total user squashed area ($TUSA_{o}$ in Formula \ref{TUSA}), which can be described as the sum of products of the job runtime ($p_{j}$) and the number of requested processors ($usage_{j}$). This user-oriented metric is based on more general \textit{total squashed area}. The normalisation is used to prioriteze less active users over those who utilize the system resources very frequently. The closer the resulting $NUWT_{o}$ values of all users are to each other, the higher is the fairness. If the $NUWT_{o}$ value is less than 1, it means that the user spend more time by computing than by waiting, which is advantageous. Similarly, values greater than 1 indicate that the total user wait time is larger than the computational time of his or hers jobs. \cite{Rudova 2012}
+
+For optimization purpose a function that for a given schedule returns a single value is needed. At work \cite{Rudova 2012} the criterion called \textit{fairness (F)} was proposed, as shown by formula \ref{fairness}.
+
+ \begin{equation}
+UWT=\frac{1}{u}\sum\limits_{o=0}^{u} NUWT_{o}
+\label{UWT}
+\end{equation}
+
+ \begin{equation}
+F=\frac{1}{u}\sum\limits_{o=0}^{u} (UWT-NUWT_{o})^{2}
+\label{fairness}
+\end{equation}
+Where UWT is User Wait Time. The squares in F definition  guarantee that only positive numbers are summed and that higher deviations from the mean value are more penalized than the small ones. 
+
+\subsection{The cumulative destribution function (CDF) of users' normalized wait times}
+The cumulative destribution function (CDF) of users' normalized wait times presents how different scheduling algorithms affect the resulting $NUWT_{o}$ values for all users of the system. This function shows the probability that the $NUWT_{o}$ of given user $o$  is less or equal to $t$. In another words, the CDF represents percentage of users having their $NUWT_{o}$ less or equal to $t$. \cite{Rudova 2012}
+
+\subsection{Wait time distribution}
+\textit{Arithmetic mean} of all normalized user wait times and the corresponding \textit{standard deviation} could also be used to evaluate the fairness of a scheduling policy. The smaller the mean and the standard deviation are the lower were the  $NUWT_{o}$ values are closer (i.e. more fair) they are. When algorithms have similar CDFs, these two metrics help to highlight the differences as they can highlight the influence of the distribution's long tail.\cite{Rudova 2012}
+
+\subsection{Fragmentation}
+The utilization of the system is usually addressed as the percentage of CPUs that are busy running jobs. In order to estimate the JSS performance the percentage of CPUs utilization should be concerned only when there are jobs in the queue. The metrics \textit{fragmentation} (\ref{fragmentation}) is defined for such estimation. \cite{FCFS-malleable}
+
+ \begin{equation}
+Fragmentation=\frac{\sum\limits_{t=StartToTermination}^{WhenWaitQueueNotEmpty} freeCPUs}{WorkLoadTotalTime \cdot TotalCPUs}
+\label{fragmentation}
+\end{equation}
+
+
+\section{Multi-site job scheduling}
+A Grid is a distributed collection of computer and storage resources maintained to serve the needs of some community or virtual organization. \cite{Globus: scheduler}
+
+In high energy physics, bioinformatics, and other disciplines, we encounter applications involving numerous, loosely coupled jobs that both access and generate large data sets. So-called Data Grids seek to harness geographically distributed resources for such large-scale data-intensive problems. Yet effective scheduling in such environments is challenging, due to
+a need to address a variety of metrics and constraints (e.g., resource utilization, response time, global and local allocation policies) while dealing with multiple, potentially independent sources of jobs and a large number of storage, compute, and network resources. In \cite{Globus: scheduler} authors describe a scheduling framework that addresses these problems. Within this framework, data movement operations may be either tightly bound to job scheduling decisions or, alternatively, performed by a decoupled, asynchronous process on the basis of observed data access patterns and load. Authors develop a family of job scheduling and data movement (replication) algorithms and use simulation studies to evaluate various combinations. their results suggest that
+while it is necessary to consider the impact of replication on the scheduling strategy, it is not always necessary to couple data movement and computation scheduling. Instead, these two activities can be addressed separately, thus significantly simplifying the design and implementation of the overall Data Grid system. \cite{Globus: scheduler}
+
+
+The data-intensive nature of individual jobs means it can be important to take data location into account when determining job placement. Replication of data from primary repositories to other locations can be an important optimization step, so as to reduce the frequency of remote data access. And the large number of jobs and resources means that centralized algorithms may be ineffective. Thus, for example, scheduling algorithms that focus only on maximizing processor
+utilization by mapping jobs to idle processors (disregarding costs associated with fetching remote data) are unlikely to be efficient.\cite{Globus: scheduler}
+
+In \cite{Globus: scheduler} ad-hoc heuristics is used to schedule data-transfers (preplacement, replication of popular datasets ) and submit jobs to CPUs. The best performance was observed with the strategy to send jobs to nodes where the data is already present while at the same time replicate the most popular datasets to more nodes. 
+
+
+\section{Data transferring}
+In \cite{Globus: data} mixed integer programming formulation of the scheduling problem was presented.  Authors consider only destination nodes as intermediate nodes. In their paper theyemploy the solution obtained by the IP as a lower bound on the total transfer time and use it as a yardstick to compare against proposed dynamic scheduling heuristics.
+The proposed algorithm performs simultaneous transfer of chunks of files from multiple file replicas, if the replicas exist. Adaptive replica selection is employed to transfer different chunks of the same file by taking dynamically changing network bandwidth into account. \cite{Globus: data}
+
+
+\section{Problem Description}
+We model a Data Grid as a set of sites, each comprising a number of processors and a limited
+amount of storage; a set of users, each associated with a site; and a set of files, each of a specified size, initially mapped to sites according to some distribution. We assume that all processors have the same performance and that all processors at a site can access any storage at
+that site. Each user generates jobs according to some distribution. Each job requires that a specified set of files be available before it can execute. It then executes for a specified amount of time on a single processor, and finally generates a specified set of files.\cite{Globus: scheduler}
+
+\section{Terms}
+Unused CPU time slot is called a gap or hole.
+
+\section{Scheduling problem formulation}
+Job shop scheduling (or Job-shop problem) is an optimization problem in computer science and operations research in which ideal jobs are assigned to resources at particular times. The most basic version is as follows:
+We are given n jobs J1, J2, ..., Jn of varying sizes, which need to be scheduled on m identical machines, while trying to minimize the makespan. The makespan is the total length of the schedule (that is, when all the jobs have finished processing). 
+
+In computer science, an online algorithm is one that can process its input piece-by-piece in a serial fashion, i.e., in the order that the input is fed to the algorithm, without having the entire input available from the start. In contrast, an offline algorithm is given the whole problem data from the beginning and is required to output an answer which solves the problem at hand.
+
+Because it does not know the whole input, an online algorithm is forced to make decisions that may later turn out not to be optimal, and the study of online algorithms has focused on the quality of decision-making that is possible in this setting. Competitive analysis formalizes this idea by comparing the relative performance of an online and offline algorithm for the same problem instance. For other points of view on online inputs to algorithms, see streaming algorithm (focusing on the amount of memory needed to accurately represent past inputs), dynamic algorithm (focusing on the time complexity of maintaining solutions to problems with online inputs) and online machine learning.
+
+\subsection{Problem variations}
+
+Many variations of the problem exist, which can be summarized as follows:
+\begin{itemize}
+\item Machines can be related, independent, equal
+\item Machines can require a certain gap between jobs or no idle-time
+\item Machines can have sequence-dependent setups
+\item Objective function can be to minimize the makespan, the Lp norm, tardiness, maximum lateness etc. It can also be multi-objective optimization problem
+\item Jobs may have constraints, for example a job i needs to finish before job j can be started
+\item Jobs and machines have mutual constraints, for example, \textbf{certain jobs can be scheduled on some machines only}
+\item Set of jobs can relate to different set of machines
+\item Deterministic (fixed) processing times or \textbf{probabilistic processing times}
+\item There could be some other side constraints also
+\end{itemize}
+
+A \textbf{disjunctive graph} is a special graph structure, frequently used in problems resembling job shop scheduling problems.[1] A disjunctive graph is defined as a graph containing disjunctive edges. The disjunctive edge represents an edge that can connect any two vertices from the possible set of vertices.[2]
+The disjunctive graph [3] is a directed graph G(V, C U D), where V denotes a set of vertices corresponding to tasks of jobs. This set contains two additional vertices: a source and a sink, which represent the start and the end of a schedule. The source is equivalent to a dummy task T0 preceding all other tasks and the sink to a dummy task T(n + 1) succeeding all other tasks. Both dummy tasks have zero processing time. C is a set of conjunctive arcs which reflect the precedence constraints initially connecting every two consecutive tasks of the same job. Undirected disjunctive edges belonging to set D connect mutually unordered tasks which require the same machine for their execution (a disjunctive edge can be represented by two opposite directed arcs). Each arc is labelled with the positive weight equal to the processing time of the task where the arc begins.
+The job shop scheduling problem requires to find an optimal order of all tasks on the machines, resulting in a schedule with the minimal length. In the disjunctive graph model, this is equivalent to select one arc in each disjunction, i.e. to turn each undirected disjunctive edge into a directed conjunctive one. By fixing directions of all disjunctive edges, the execution order of all conflicting tasks requiring the same machine is determined and a complete schedule is obtained. Moreover, the resulting graph has to be acyclic and if it is optimal, the length of the longest path from the source to the sink is minimum. This longest path determines the makespan, it is the duration of the longest chain of tasks in a job shop.
+
+
+%\section*{References}
+\begin{thebibliography}{9}
+
+\bibitem{Zerola}
+ Zerola M, Lauret J, Bartak R and Sumbera M 2012
+ One click dataset transfer: toward efficient coupling of distributed storage resources and CPUs  \textit{J. Phys.: Conf. Ser.} \textbf{368} 
+
+\bibitem{Horky ACAT}
+Horky J, Lokajicek M and Peisar J 2013
+Influence of Distributing a Tier-2 Data Storage on Physics Analysis
+\textit{J. Phys.: Conf. Ser.} ACAT Conf. Peking
+
+\bibitem{Rudova Experiments w J-sch}
+Klusacek D, Rudova H and Placha M 2010
+Experiments with Job Scheduling in MetaCentrum
+\textit{In MetaCentrum Yearbook 2009} (Praha) pp 65-69 
+
+\bibitem{Rudova CP schedulling}
+Klusacek D and Rudova H 2011
+Efficient grid scheduling through the incremental schedule-based approach
+\textit{Computational Intelligence} \textbf{27} 4-22
+
+\bibitem{Backfilling}
+Srinivasan S, Kettimuthu R, Subramani V and Sadayappan P 2002
+Selective reservation strategies for bachfilling job scheduling
+\textit{Job Scheduling Strategies for Parallel Processing} (Edinburgh) \textbf{2537} pp 55-71
+
+\bibitem{Globus4}
+Ian Foster 2006
+Globus toolkit version 4: software for service-oriented systems
+\textit{J. Comput. Sci. \& Technol.} 
+\textbf{21} 4 pp 513-520
+
+\bibitem{Rudova 2012}
+Klusacek D and Rudova H 2012
+Performance and fairness for users in parallel job scheduling
+\textit{Lecture Notes in Computer Science} \textbf{7698} pp 235-253
+
+\bibitem{definition 1999}
+Fabricio Alves Barbosa da Silva and Isaac D. Schersony 1999
+Towards Flexibility and Scalability in Parallel Job Scheduling
+\textit{Parallel and Distributed Computing and Systems} (USA) November 3-6 
+
+\bibitem{Globus: data}
+Khanna G, Catalyurek U, Kurc T, Kettimunthu R, Sdayappan P and Saltz J 2008
+A dynamic scheduling approach for coordinated wide-area data transfers using GridFTP
+\textit{IEEE International Symposium on Parallel and Distributed Processing}(Miami)pp 1 - 12
+
+\bibitem{FCFS-malleable}
+Utrera G, Tabik S, Corbalan J and Labarta J 2012
+A job scheduling approach for multi-core clusters based on virtual malleability
+\textit{18th Int. Conf. Euro-Par}(Rhodes Island)pp 191-203
+
+\bibitem{Globus: data}
+Khanna G, Catalyurek U, Kurc T, Kettimunthu R, Sdayappan P and Saltz J 2008
+A dynamic scheduling approach for coordinated wide-area data transfers using GridFTP
+\textit{IEEE International Symposium on Parallel and Distributed Processing}(Miami)pp 1 - 12
+
+\bibitem{Globus: scheduler}
+Ranganathan K and Foster I 2002
+Decoupling computation and data scheduling in distributed data-intensive applications
+\textit{11th IEEE International Symposium on High Performance Distributed Computing}pp 352 - 358
+
+
+\end{thebibliography}
+
+\end{document}

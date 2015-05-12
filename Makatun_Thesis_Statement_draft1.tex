@@ -53,14 +53,26 @@ The STAR experiment at the Relativistic Heavy Ion Collider (RHIC) studies a prim
 
 Like any other modern experiment in High Energy and Nuclear Physics (HENP), STAR intends to rely on distributed data processing, making use of several remote computational sites (for some experiments this number can scale up to several hundreds).
 
-When running data intensive applications on distributed computational resources long I/O overheads may be observed as access to remotely stored data is performed. Latency and bandwidth can become the major limiting factors for the overall computation performance and can reduce the CPU time\,/\,wall time ratio due to excessive I/O wait.  Widely used data management systems in HENP community (Xrootd, DPM) are focused on providing heterogeneous access to distributed storage and do not consider data pre-placement with respect to available CPUs, job durations or network performance. At the same time job scheduling systems (PBS, Condor) do not reason about transfer overheads when accessing data at distributed storage. For this reason, an optimization of data transferring and distribution across multiple sites is often done manually, using a custom setup for each particular infrastructure \cite{Balewski}.
+When running data intensive applications on distributed computational resources long I/O overheads may be observed as access to remotely stored data is performed. Latency and bandwidth can become the major limiting factors for the overall computation performance and can reduce the CPU time\,/\,wall time ratio due to excessive I/O wait \cite{Betev,HorkyACAT}.  Widely used data management systems in HENP community (Xrootd \cite{Xrootd}, DPM \cite{DPM}) are focused on providing heterogeneous access to distributed storage and do not consider data pre-placement with respect to available CPUs, job durations or network performance. At the same time job scheduling systems (PBS, Condor) do not reason about transfer overheads when accessing data at distributed storage. For this reason, an optimization of data transferring and distribution across multiple sites is often done manually, using a custom setup for each particular infrastructure \cite{Balewski}.
 
 Previous collaborative work between BNL (Brookhaven National Laboratory) and NPI/ASCR (Nuclear Physics Institute, Academy of Sciences of the Czech Republic) showed that the global planning of data transfers within the Grid can outperform widely used heuristics such as Peer-to-Peer and Fastest link (used in Xrootd)\cite{Zerola}. This concept was later complimented with usage of caching \cite{Makatun_cache}. The comparison and selection of the most appropriate caching policies for the data access pattern in HEP is described in Section \ref{Cache}. 
  
-Those results became the ground for continuation of research and extension of global planning to the entire data processing workflow, i.e., scheduling of CPU allocation, data transferring and  placement at storage. In Section \ref{CP_approach} we propose a constraint programming planner that schedules computational jobs and data transfers in a distributed environment in order to reduce the overall completion time. Since such global scheduling is computationally demanding it should be divided into several stages in order to improve scheduler performance and scalability. A planing of resource load can be accomplished in the first stage before scheduling particular file transfers and jobs. In Section \ref{Network_flow} we address the problem of data production planning, answering the question how the load should be distributed over resources and how the data should be transferred given the network structure, bandwidth, storage and CPU slots available. This will allow local schedulers to process jobs and have CPUs busy all the time while not exceeding disk and network capacities.
+Those results became the ground for continuation of research and extension of global planning to the entire data processing workflow, i.e., scheduling of CPU allocation, data transferring and  placement at storage. In Section \ref{CP_approach} we propose a constraint programming planner that schedules computational jobs and data transfers in a distributed environment in order to reduce the overall completion time. Since such global scheduling is computationally demanding it should be divided into several stages in order to improve scheduler performance and scalability. A planing of resource load can be accomplished in the first stage before scheduling particular file transfers and jobs. In Section \ref{Network_flow} we address the problem of data production planning, answering the question how the load should be distributed over resources and how the data should be transferred given the network structure, bandwidth, storage and CPU slots available. This will allow each computational site to load the CPUs with jobs while not exceeding disk and network capacities.
 
-\section{Problem analysis}
 \subsection{Usecases}
+Due to a data level of parallelism a typical workflow of HENP computation
+consists of independent jobs requiring one CPU,  using one input and producing one output file each. This workload can be further divided into two classes of jobs: data production and user analysis.
+
+{data production} 
+1 job per file, Single source, large output
+overall compleation time, job order is unimportant.
+
+{user analysis} 
+Many sources, several jobs per file, output size is negligible, inaccurate time estimations. 
+User fairness is important
+
+Sections \ref{Network_flow} and \ref{CP_approach} is focused on scheduling for data production, while Section \ref{Cache} compares caching strategies for a mixed workload. 
+
 Long I/O overheads when accessing data from remote site can significantly reduce the application's CPUtime/WallTime ratio \cite{HorkyACAT,Betev}. For this reason, when setting up a data production at remote sites one has to consider the network throughput, available storage and CPU slots. When there are few remote sites involved in the data processing, the load can be tuned manually and simple heuristic may work, but, as the number of sites grows and the environment is constantly changing (site outage, fluctuations of network throughput and CPU availability), an automated planning of workflows becomes needed. 
 
 As an intuitive example of optimization let us consider a situation when a given dataset can be either processed locally, or can be sent to a remote site. Depending on transfer overhead it may appear to be optimal to wait for free CPU slots at the local site and process all the data there, or send a smaller fraction of the dataset for remote processing. Commonly used heuristics such as ``\textit{Pull a job when a CPU slot is free}'' will not provide an optimization with respect to an overall processing makespan.  
@@ -543,7 +555,7 @@ where \textbf{Caching Time} is the same as for LVCT and \textbf{Number Of Access
 \end{itemize}
 
 
-\subsubsection{Simulation results}
+\subsection{Simulation results}
 Three series of simulations with three access patterns were performed for each algorithm (90 simulations in total for each algorithm): 
 \begin{itemize}
 \item 10 simulations with cache size 1-90 \% of storage with fixed low-mark 75\% and high-mark 95\%. Those simulations aim to understand what would happen if we have large storage cache. Those cases are aligned with a DPM and Xrootd use where most (if not all) the dataset(s) are in the system.
