@@ -59,20 +59,17 @@ Previous collaborative work between BNL (Brookhaven National Laboratory) and NPI
  
 Those results became the ground for continuation of research and extension of global planning to the entire data processing workflow, i.e., scheduling of CPU allocation, data transferring and  placement at storage. In Section \ref{CP_approach} we propose a constraint programming planner that schedules computational jobs and data transfers in a distributed environment in order to reduce the overall completion time. Since such global scheduling is computationally demanding it should be divided into several stages in order to improve scheduler performance and scalability. A planing of resource load can be accomplished in the first stage before scheduling particular file transfers and jobs. In Section \ref{Network_flow} we address the problem of data production planning, answering the question how the load should be distributed over resources and how the data should be transferred given the network structure, bandwidth, storage and CPU slots available. This will allow each computational site to load the CPUs with jobs while not exceeding disk and network capacities.
 
-\subsection{Usecases}
+\subsection{Workload types}
 Due to a data level of parallelism a typical workflow of HENP computation
 consists of independent jobs requiring one CPU,  using one input and producing one output file each. This workload can be further divided into two classes of jobs: data production and user analysis.
 
-{data production} 
-1 job per file, Single source, large output
-overall compleation time, job order is unimportant.
+Data production jobs are processing raw detector data into reconstructed physical events. This jobs are usually submitted automatically by a script. Input files for these jobs are usually initially placed at the central data storage of an experiment (e.g. tape storage at Tier-0 site). Each raw file has to be processed once. An output file of such a job is of comparable size with the input file. After processing, the output file has to be copied to the central storage. The typical task of a data production campaign would be to process a given dataset (i.e. several Petabytes of similar files) as soon as possible (e.g. next several month). Under such scenario the particular order of jobs is unimportant, while the makespan becomes the main value for an optimization. Since all the jobs/input files form the same dataset are similar, parameters of upcoming jobs can be estimated knowing the statistics of completed jobs.
 
-{user analysis} 
-Many sources, several jobs per file, output size is negligible, inaccurate time estimations. 
-User fairness is important
+User analysis are the jobs submitted by many different researches. These jobs re processing the reconstructed data which can have several copies within Grid and the same input file can be processed several times by the same or different users. Output size of user analysis is negligible compared to the size of input. Each researcher uses its own code for analysis, for that reason the job parameters are far less predictable then for the data production. Moreover, when users submit their jobs to the batch system they often overestimate the runtime  to prevent their jobs being killed due to overrun.  Another contrast to data production is that the order of job execution plays an important role in user analysis - it defines so called "fairness". There is no strict definition of "fairness" in schedulling, but the general principle is that all the users should receive a fair share of resources. There exist several commonly accepted metrics to measure the quality of a schedule in a multi-user environment: response time, wait time, slowdown, fragmentation and etc. \cite{Rudova_Tabu_search}. 
 
-Sections \ref{Network_flow} and \ref{CP_approach} is focused on scheduling for data production, while Section \ref{Cache} compares caching strategies for a mixed workload. 
+Sections \ref{Network_flow} and \ref{CP_approach} are focused on scheduling for data production, while Section \ref{Cache} compares caching strategies for a mixed workload. 
 
+\subsection{Usecases}
 Long I/O overheads when accessing data from remote site can significantly reduce the application's CPUtime/WallTime ratio \cite{HorkyACAT,Betev}. For this reason, when setting up a data production at remote sites one has to consider the network throughput, available storage and CPU slots. When there are few remote sites involved in the data processing, the load can be tuned manually and simple heuristic may work, but, as the number of sites grows and the environment is constantly changing (site outage, fluctuations of network throughput and CPU availability), an automated planning of workflows becomes needed. 
 
 As an intuitive example of optimization let us consider a situation when a given dataset can be either processed locally, or can be sent to a remote site. Depending on transfer overhead it may appear to be optimal to wait for free CPU slots at the local site and process all the data there, or send a smaller fraction of the dataset for remote processing. Commonly used heuristics such as ``\textit{Pull a job when a CPU slot is free}'' will not provide an optimization with respect to an overall processing makespan.  
@@ -112,6 +109,8 @@ Scheduling of computational jobs submitted by users (user analysis) has even mor
 \end{figure} 
 
 \subsection{Related work}
+Scheduling policies: \cite{Rudova_Tabu_search},
+
 Optimization of data intensive applications in Grid was studied
 in~\cite{Globus_scheduler}. In this work an optimization was achieved by
 replication of highly used files to more sites while the jobs were executed
