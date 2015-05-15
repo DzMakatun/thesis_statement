@@ -109,14 +109,19 @@ Scheduling of computational jobs submitted by users (user analysis) has even mor
 \end{figure} 
 
 \subsection{Related work}
-Scheduling policies: \cite{Rudova_Tabu_search},
+Most of the widely used job scheduling policies such as First Come First Served (FCFS), conservative backfilling (CONS), aggressive backfilling (EASY), selective backfilling and etc. \cite{srinivasan2002selective} are focused on maximizing CPU throughput and fairness to users. In work  \cite{Rudova_Tabu_search} the backfilling is performed with the help of Tabu search, which helps to find a schedule closer to the global optimum. The above strategies are dedicated to manage a single computational cluster where data transfer overhead is not a significant factor. Also, for the data production workflow such metrics as fairness to users is irrelevant.
+
+In \cite{Rudova_Tabu_search} (Multi- resource) fairness to users is considered in the case when several different resources (CPU, memory, storage, network) are taken into account. 
+
+
+In \cite{casanova2000heuristics} authors modified existing heuristics  to schedule parameter sweep applications with file I/O requirements (e.g. Monte Carlo simulations), and studied an impact of inaccurate performance prediction on scheduling. Authors consider job scheduling on heterogeneous resources (Grid) taking data transfer overhead for each job into account. While the input transfer overhead was estimated knowing an end-to-end connection speed, the file transfers itself were not scheduled over network, neither actual network topology was taken into account. For data production in HENP uncoordinated data transfers may overcome the network capacity which leads to overall degraded performance. For this reason we consider network load planning in our research.
 
 Optimization of data intensive applications in Grid was studied
 in~\cite{Globus_scheduler}. In this work an optimization was achieved by
 replication of highly used files to more sites while the jobs were executed
 where their input data is located. However, this is not the case for data
 production, when each file has to be processed once. 
-%
+
 Explicit model distributing jobs over a Grid with respect to the network
 bandwidth was proposed in~\cite{Trees}. The network structure of the Grid was
 modeled as a tree and all the files were assumed to be of the same size and
