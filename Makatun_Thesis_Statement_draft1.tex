@@ -63,9 +63,9 @@ Those results became the ground for continuation of research and extension of gl
 Due to a data level of parallelism a typical workflow of HENP computation
 consists of independent jobs requiring one CPU,  using one input and producing one output file each. This workload can be further divided into two classes of jobs: data production and user analysis.
 
-Data production jobs are processing raw detector data into reconstructed physical events. This jobs are usually submitted automatically by a script. Input files for these jobs are usually initially placed at the central data storage of an experiment (e.g. tape storage at Tier-0 site). Each raw file has to be processed once. An output file of such a job is of comparable size with the input file. After processing, the output file has to be copied to the central storage. The typical task of a data production campaign would be to process a given dataset (i.e. several Petabytes of similar files) as soon as possible (e.g. next several month). Under such scenario the particular order of jobs is unimportant, while the makespan becomes the main value for an optimization. Since all the jobs/input files form the same dataset are similar, parameters of upcoming jobs can be estimated knowing the statistics of completed jobs.
+Data production jobs are processing raw detector data into reconstructed physical events. This jobs are usually submitted centrally. Input files for these jobs are initially placed at the central data storage of an experiment (e.g. tape storage at Tier-0 site). Each raw file has to be processed once. An output file is of comparable size with the input file. After processing, the output file has to be copied back to the central storage. The typical task of a data production campaign would be to process a given dataset (i.e. several Petabytes of similar files) as soon as possible (e.g. next several month). Under such scenario the particular order of jobs is unimportant, while the makespan becomes the main value for an optimization. Since all the jobs processing input files form the same dataset are similar, parameters of upcoming jobs can be estimated knowing the statistics of completed jobs.
 
-User analysis are the jobs submitted by many different researches. These jobs re processing the reconstructed data which can have several copies within Grid and the same input file can be processed several times by the same or different users. Output size of user analysis is negligible compared to the size of input. Each researcher uses its own code for analysis, for that reason the job parameters are far less predictable then for the data production. Moreover, when users submit their jobs to the batch system they often overestimate the runtime  to prevent their jobs being killed due to overrun.  Another contrast to data production is that the order of job execution plays an important role in user analysis - it defines so called "fairness". There is no strict definition of "fairness" in schedulling, but the general principle is that all the users should receive a fair share of resources. There exist several commonly accepted metrics to measure the quality of a schedule in a multi-user environment: response time, wait time, slowdown, fragmentation and etc. \cite{Rudova_Tabu_search}. 
+User analysis consists of jobs submitted by many different researches. These jobs are processing the reconstructed data which are the result of data production. Input files can have several copies within Grid. In this case the same input file can be processed several times by the same or different users. Output size of user analysis is negligible compared to the size of input. Each researcher uses its own code for analysis, for that reason the job parameters are far less predictable then for the data production. Moreover, when users submit their jobs to the batch system they often overestimate the runtime  to prevent their jobs being killed due to overrun.  Another contrast to data production is that the order of job execution plays an important role in user analysis - it defines so called \textit{fairness to users}. There is no strict definition of fairness in scheduling, but the general principle is that all the users should receive a fair share of resources. There exist several commonly accepted metrics to measure the quality of a schedule in a multi-user environment: response time, wait time, slowdown, fragmentation and etc. \cite{Rudova_Tabu_search}. 
 
 Sections \ref{Network_flow} and \ref{CP_approach} are focused on scheduling for data production, while Section \ref{Cache} compares caching strategies for a mixed workload. 
 
@@ -81,13 +81,6 @@ Another example arises from a workflow optimization which was done for inclusion
     \includegraphics[trim =30mm 30mm 30mm 30mm ,clip, width=.4\textwidth]{pic/Data_production_general_bw2.pdf}
     \caption{Schema of data production in the Cloud.}
     \label{fig:simulated grig}
-\end{figure}
-
-\begin{figure}[h]
-\centering
-    \includegraphics [trim =30mm 35mm 30mm 40mm ,clip, width=.4\textwidth]{pic/link_selection_bw3.pdf}	
-    \caption{An example of a transfer path. Illustration for constraints 1-4 in section \ref{path}.  }
-    \label{fig:path}
 \end{figure}
 
 Scheduling of computational jobs submitted by users (user analysis) has even more degrees of possible optimization: selection between multiple data sources, grouping of jobs that use the same input files. This case becomes even more complex due to a poor predictability of the user analysis jobs. However,  the main question for optimization remains the same as for the examples above: How to distribute a given set of tasks over the available set of resources in order to complete all the tasks within minimal time?
@@ -109,12 +102,12 @@ Scheduling of computational jobs submitted by users (user analysis) has even mor
 \end{figure} 
 
 \subsection{Related work}
-Most of the widely used job scheduling policies such as First Come First Served (FCFS), conservative backfilling (CONS), aggressive backfilling (EASY), selective backfilling and etc. \cite{srinivasan2002selective} are focused on maximizing CPU throughput and fairness to users. In work  \cite{Rudova_Tabu_search} the backfilling is performed with the help of Tabu search, which helps to find a schedule closer to the global optimum. The above strategies are dedicated to manage a single computational cluster where data transfer overhead is not a significant factor. Also, for the data production workflow such metrics as fairness to users is irrelevant.
+Most of the widely used job scheduling policies such as First Come First Served (FCFS), conservative backfilling (CONS), aggressive backfilling (EASY), selective backfilling and etc. \cite{srinivasan2002selective} are focused on maximizing CPU throughput and fairness to users. In work  \cite{Rudova_Tabu_search} the backfilling is performed with the help of Tabu search, which helps to find a schedule closer to the global optimum. %cite Rudova multi resource scheduling %In work \cite{} authors propose a method to improve fairness to users in a multi resourse invironmert. This goal is acheived by taking into account the usege of all relevant resoureses such as CPU, memory, storage and network speed.
+ The above strategies are dedicated to manage a single computational cluster where data transfer overhead is not a significant factor. Also, for the data production workflow such metrics as fairness to users is irrelevant.
+ 
+%Add Suffarage stratage, DAG schedulling 
 
-In \cite{Rudova_Tabu_search} (Multi- resource) fairness to users is considered in the case when several different resources (CPU, memory, storage, network) are taken into account. 
-
-
-In \cite{casanova2000heuristics} authors modified existing heuristics  to schedule parameter sweep applications with file I/O requirements (e.g. Monte Carlo simulations), and studied an impact of inaccurate performance prediction on scheduling. Authors consider job scheduling on heterogeneous resources (Grid) taking data transfer overhead for each job into account. While the input transfer overhead was estimated knowing an end-to-end connection speed, the file transfers itself were not scheduled over network, neither actual network topology was taken into account. For data production in HENP uncoordinated data transfers may overcome the network capacity which leads to overall degraded performance. For this reason we consider network load planning in our research.
+In \cite{casanova2000heuristics} authors have modified existing heuristics  to schedule parameter sweep applications with file I/O requirements (e.g. Monte Carlo simulations), and studied an impact of inaccurate performance prediction on scheduling. Authors consider job scheduling on heterogeneous resources (Grid) taking data transfer overhead for each job into account. While the input transfer overhead was estimated knowing an end-to-end connection speed, the file transfers itself were not scheduled at network links, neither actual network topology was taken into account. In case of data production in HENP, uncoordinated data transfers may overcome the network capacity which leads to overall degraded performance. For this reason in our research we consider network load planning.
 
 Optimization of data intensive applications in Grid was studied
 in~\cite{Globus_scheduler}. In this work an optimization was achieved by
@@ -133,8 +126,7 @@ and assume fluctuations of job parameters.
 \section{Resource load planning}
 \label{Network_flow}
 Due to a data level of parallelism a typical workflow of HENP computation
-consists of independent jobs using one CPU, one input and one output file. We
-assume there is a local scheduler running at each site, which picks a new
+consists of independent jobs using one CPU, one input and one output file. For the following model we assume there is a local scheduler running at each site, which picks a new
 input file to process from the local storage of that site each time when a CPU becomes
 free. Input data must be transferred from the central storage
 to each site in such a manner that at the every moment of time there is enough
@@ -350,7 +342,7 @@ If we have an optimal solution for the input flow maximization problem $f^{in}(e
 
 \subsection{Solving Procedure}
 \label{solve}
-It can be proven that the maximum flow problems for input and output transfers
+The maximum flow problems for input and output transfers
 can be solved independently under assumptions: (a) all the real network links
 in the considered Grid are full-duplex, i.e., a network throughput between two
 nodes is the same in both directions (b) in a steady state the size of the
@@ -376,7 +368,7 @@ local disk capacities.
 
 \section{Constraint programming approach}
 \label{CP_approach}
-Problems of scheduling, planning and optimization are being commonly solved with the help of Constraint Programming (CP) \cite{CP}. It is a form of declarative programming which is widely used in scheduling, logistics, network planning, vehicle routing, production optimization etc... In the next sections we will introduce our Constraint Satisfaction Problem (CSP) formulation for a data production at multiple sites and provide a simulation-based evaluation of the proposed model.
+Problems of scheduling, planning and optimization are being commonly solved with the help of Constraint Programming (CP) \cite{CP}. It is a form of declarative programming which is widely used in scheduling, logistics, network planning, vehicle routing, production optimization etc... In the this section we will introduce our Constraint Satisfaction Problem (CSP) formulation for a data production at multiple sites and provide a simulation-based evaluation of the proposed model. In contrast to the model in previous section which plans global data flow this model describes per job/file/transfer scheduling. 
 
 We will introduce only the core concepts of our CSP formulation and search algorithms, omitting  detailed mathematical expressions.
 The following input parameters are necessary to define our CSP.
@@ -411,7 +403,12 @@ For a better search performance the overall problem is divided into two subprobl
 \end{enumerate}
 
 \subsection{Constraints at the planning stage}
-
+\begin{figure}[h]
+\centering
+    \includegraphics [trim =30mm 35mm 30mm 40mm ,clip, width=.4\textwidth]{pic/link_selection_bw3.pdf}	
+    \caption{An example of a transfer path. Illustration for constraints 1-4 in section \ref{path}.  }
+    \label{fig:path}
+\end{figure}
 At the planning stage we have to assign a transfer path for an input and an output file of each job which can be defined by the following constraints (see Figure \ref{fig:path}):
 \begin{description}
 \label{path}
