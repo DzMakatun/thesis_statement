@@ -2,6 +2,7 @@
 
 %% Kodovani a fonty
 \usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
 \usepackage[T1]{fontenc}
 \usepackage{url}
 
@@ -11,6 +12,11 @@
 %% Grafika
 \usepackage{graphicx}
 \usepackage{colortbl}
+
+\usepackage[
+backend=bibtex
+]{biblatex}
+\addbibresource{bibliography.bib}
 
 \begin{document}
 
@@ -449,8 +455,7 @@ Cumulative constraints are widely used in Constraint Programming for description
   File placement & \textbf{$Fs_{fc}$} & \textbf{$Fdur_{fc}$} & $size_{f}$ & $disk_{c}$ \\ 
   \hline 
 \end{tabular}
-    \label{fig:simulated grig} 
-    \end{center}
+\end{center}
 \end{table}
 
 \subsection{Simulations}
@@ -668,8 +673,15 @@ This work has been supported by the Czech Science Foundation
 
 
 
-\bibliography{bibliography}{}
-\bibliographystyle{spmpsci}
+%\bibliography{bibliography}{}
+%\bibliographystyle{spmpsci}
+
+\begin{refsection}
+\nocite{ACAT_2014}
+\printbibliography[heading=Publications]
+\end{refsection}
+
+\printbibliography
 
 		
 
