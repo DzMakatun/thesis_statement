@@ -51,13 +51,21 @@ constraint programming, Grid, Cloud, data processing , data transferring, data p
 \section{Introduction}
 The STAR experiment at the Relativistic Heavy Ion Collider (RHIC) studies a primordial form of matter that existed in the universe shortly after the Big Bang. Collisions of heavy ions occur millions of times per second inside the detector, producing tens of petabytes of raw data each year. All the raw detector data has to be processed in order to reconstruct physical events which are further analyzed by scientists. This process is called \textit{data production}.
 
-Like any other modern experiment in High Energy and Nuclear Physics (HENP), STAR intends to rely on distributed data processing, making use of several remote computational sites (for some experiments this number can scale up to several hundreds).
+Like any other modern experiment in High Energy and Nuclear Physics (HENP), STAR intends to rely on distributed data processing, making use of several remote computational sites (for some experiments this number can scale up to several hundreds) (see Figure \ref{sites}).
+
+\begin{figure}[h]
+	\begin{center}
+		\includegraphics [trim= 30mm 30mm 30mm 30mm , clip, angle =-90, width=0.7\textwidth]{pic/sites.pdf}
+	\end{center}
+	\caption{Data production Grid of the experiment STAR. Raw data is recovered from central HPSS to NFS storage at RCF and then it is distributed between local and remote sites. Arrows represent network links.}
+	\label{sites}
+\end{figure} 	
 
 When running data intensive applications on distributed computational resources long I/O overheads may be observed as access to remotely stored data is performed. Latency and bandwidth can become the major limiting factors for the overall computation performance and can reduce the CPU time\,/\,wall time ratio due to excessive I/O wait \cite{Betev,HorkyACAT}.  Widely used data management systems in HENP community (Xrootd \cite{Xrootd}, DPM \cite{DPM}) are focused on providing heterogeneous access to distributed storage and do not consider data pre-placement with respect to available CPUs, job durations or network performance. At the same time job scheduling systems (PBS, Condor) do not reason about transfer overheads when accessing data at distributed storage. For this reason, an optimization of data transferring and distribution across multiple sites is often done manually, using a custom setup for each particular infrastructure \cite{Balewski}.
 
 Previous collaborative work between BNL (Brookhaven National Laboratory) and NPI/ASCR (Nuclear Physics Institute, Academy of Sciences of the Czech Republic) showed that the global planning of data transfers within the Grid can outperform widely used heuristics such as Peer-to-Peer and Fastest link (used in Xrootd)\cite{Zerola}. This concept was later complimented with usage of caching \cite{Makatun_cache}. The comparison and selection of the most appropriate caching policies for the data access pattern in HEP is described in Section \ref{Cache}. 
  
-Those results became the ground for continuation of research and extension of global planning to the entire data processing workflow, i.e., scheduling of CPU allocation, data transferring and  placement at storage. In Section \ref{CP_approach} we propose a constraint programming planner that schedules computational jobs and data transfers in a distributed environment in order to reduce the overall completion time. Since such global scheduling is computationally demanding it should be divided into several stages in order to improve scheduler performance and scalability. A planing of resource load can be accomplished in the first stage before scheduling particular file transfers and jobs. In Section \ref{Network_flow} we address the problem of data production planning, answering the question how the load should be distributed over resources and how the data should be transferred given the network structure, bandwidth, storage and CPU slots available. This will allow each computational site to load the CPUs with jobs while not exceeding disk and network capacities.
+Those results became the ground for continuation of research and extension of global planning to the entire data processing workflow, i.e., scheduling of CPU allocation, data transferring and  placement at storage \cite{ACAT_cp,MISTA}. In Section \ref{CP_approach} we propose a constraint programming planner that schedules computational jobs and data transfers in a distributed environment in order to reduce the overall completion time. Since such global scheduling is computationally demanding it should be divided into several stages in order to improve scheduler performance and scalability. A planing of resource load can be accomplished in the first stage before scheduling particular file transfers and jobs. In Section \ref{Network_flow} we address the problem of data production planning, answering the question how the load should be distributed over resources and how the data should be transferred given the network structure, bandwidth, storage and CPU slots available. This will allow each computational site to load the CPUs with jobs while not exceeding disk and network capacities.
 
 \subsection{Workload types}
 Due to a data level of parallelism a typical workflow of HENP computation
@@ -67,14 +75,14 @@ Data production jobs are processing raw detector data into reconstructed physica
 
 User analysis consists of jobs submitted by many different researches. These jobs are processing the reconstructed data which are the result of data production. Input files can have several copies within Grid. In this case the same input file can be processed several times by the same or different users. Output size of user analysis is negligible compared to the size of input. Each researcher uses its own code for analysis, for that reason the job parameters are far less predictable then for the data production. Moreover, when users submit their jobs to the batch system they often overestimate the runtime  to prevent their jobs being killed due to overrun.  Another contrast to data production is that the order of job execution plays an important role in user analysis - it defines so called \textit{fairness to users}. There is no strict definition of fairness in scheduling, but the general principle is that all the users should receive a fair share of resources. There exist several commonly accepted metrics to measure the quality of a schedule in a multi-user environment: response time, wait time, slowdown, fragmentation and etc. \cite{Rudova_Tabu_search}. 
 
-Sections \ref{Network_flow} and \ref{CP_approach} are focused on scheduling for data production, while Section \ref{Cache} compares caching strategies for a mixed workload. 
+Sections \ref{Network_flow} and \ref{CP_approach} are focused on scheduling for data production, while Section \ref{Cache} compares caching strategies for a user access pattern. 
 
 \subsection{Usecases}
 Long I/O overheads when accessing data from remote site can significantly reduce the application's CPUtime/WallTime ratio \cite{HorkyACAT,Betev}. For this reason, when setting up a data production at remote sites one has to consider the network throughput, available storage and CPU slots. When there are few remote sites involved in the data processing, the load can be tuned manually and simple heuristic may work, but, as the number of sites grows and the environment is constantly changing (site outage, fluctuations of network throughput and CPU availability), an automated planning of workflows becomes needed. 
 
 As an intuitive example of optimization let us consider a situation when a given dataset can be either processed locally, or can be sent to a remote site. Depending on transfer overhead it may appear to be optimal to wait for free CPU slots at the local site and process all the data there, or send a smaller fraction of the dataset for remote processing. Commonly used heuristics such as ``\textit{Pull a job when a CPU slot is free}'' will not provide an optimization with respect to an overall processing makespan.  
 
-Another example arises from a workflow optimization which was done for inclusion of the ANL (Argonne National Laboratory) computational facility into the Cloud based data production of the STAR experiment \cite{Balewski}. In this case, and due to the lack of local storage at the site for buffering, the throughput of a needed direct on-demand network connection between BNL (New York) and ANL (Illinois) was not sufficient to saturate all the available CPUs at the remote site. An optimization was achieved by feeding CPUs at ANL from two sources: directly from BNL and through an intermediate site NERSC (National Energy Research Scientific Computing Center, California) having large local caching and with better connectivity to ANL. This example illustrates an efficient use of indirect data transfers which cannot be guessed by simple heuristics. A general illustration of distributed resources used for data production and their interconnection is given at Figure \ref{fig:simulated grig}.
+Another example arises from a workflow optimization which was done for inclusion of the ANL (Argonne National Laboratory) computational facility into the Cloud based data production of the STAR experiment \cite{Balewski}. In this case, and due to the lack of local storage at the site for buffering, the throughput of a needed direct on-demand network connection between BNL (New York) and ANL (Illinois) was not sufficient to saturate all the available CPUs at the remote site. An optimization was achieved by feeding CPUs at ANL from two sources: directly from BNL and through an intermediate site NERSC (National Energy Research Scientific Computing Center, California) having large local caching and with better connectivity to ANL (see Figure \ref{sites}). This example illustrates an efficient use of indirect data transfers which cannot be guessed by simple heuristics. A general illustration of distributed resources used for data production and their interconnection is given at Figure \ref{fig:simulated grig}.
 
 \begin{figure}[h]
 \centering
@@ -85,25 +93,8 @@ Another example arises from a workflow optimization which was done for inclusion
 
 Scheduling of computational jobs submitted by users (user analysis) has even more degrees of possible optimization: selection between multiple data sources, grouping of jobs that use the same input files. This case becomes even more complex due to a poor predictability of the user analysis jobs. However,  the main question for optimization remains the same as for the examples above: How to distribute a given set of tasks over the available set of resources in order to complete all the tasks within minimal time?
 
-\begin{figure}[h]
-	\begin{center}
-		\includegraphics [trim= 30mm 30mm 30mm 30mm , clip, angle =-90, width=0.7\textwidth]{pic/sites.pdf}
-	\end{center}
-	\caption{Data production Grid of the experiment STAR. Raw data is recovered from central HPSS to NFS storage at RCF and then it is distributed between local and remote sites. Arrows represent network links.}
-	\label{sites}
-\end{figure} 	
-
-\begin{figure}[h]
-	\begin{center}
-		\includegraphics [trim= 30mm 30mm 30mm 30mm , clip, angle =-90, width=0.7\textwidth]{pic/real_network.pdf}
-	\end{center}
-	\caption{Input transfer planning: transformation of Data production Grid into   capacitated $\{s,t\}$ network for a flow maximization problem. Dummy vertexes (a source and a sink) are added. Each computational site is connected to the sink by a dummy edge. The source is connected to the NFS at RCF via dummy edge. The dummy edges are used in order to express constraints on network flow imposed by storage capacity and number of CPUs at each site.  Central HPSS is removed from consideration.}
-	\label{real_network}
-\end{figure} 
-
 \subsection{Related work}
-Most of the widely used job scheduling policies such as First Come First Served (FCFS), conservative backfilling (CONS), aggressive backfilling (EASY), selective backfilling and etc. \cite{srinivasan2002selective} are focused on maximizing CPU throughput and fairness to users. In work  \cite{Rudova_Tabu_search} the backfilling is performed with the help of Tabu search, which helps to find a schedule closer to the global optimum. %cite Rudova multi resource scheduling %In work \cite{} authors propose a method to improve fairness to users in a multi resourse invironmert. This goal is acheived by taking into account the usege of all relevant resoureses such as CPU, memory, storage and network speed.
- The above strategies are dedicated to manage a single computational cluster where data transfer overhead is not a significant factor. Also, for the data production workflow such metrics as fairness to users is irrelevant.
+Most of the widely used job scheduling policies such as First Come First Served (FCFS), conservative backfilling (CONS), aggressive backfilling (EASY), selective backfilling and etc. \cite{srinivasan2002selective} are focused on maximizing CPU throughput and fairness to users. In work  \cite{Rudova_Tabu_search} the backfilling is performed with the help of Tabu search, which helps to find a schedule closer to the global optimum. In work \cite{Rudova_Multi-resource} authors proposed a multi-resource aware user prioritization mechanism, where fairness to users is improved by taking into account the usage of several resources (such as CPU, RAM, HDD, GPU) and heterogeneity of the system.  The above strategies are dedicated to manage a single computational cluster where data transfer overhead is not a significant factor. Also, for the data production workflow such metrics as fairness to users is irrelevant.
  
 %Add Suffarage stratage, DAG schedulling 
 
@@ -162,6 +153,14 @@ found in polynomial time with known algorithms.
 
 \begin{figure}[h]
 	\begin{center}
+		\includegraphics [trim= 30mm 30mm 30mm 30mm , clip, angle =-90, width=0.7\textwidth]{pic/real_network.pdf}
+	\end{center}
+	\caption{Input transfer planning: transformation of Data production Grid into   capacitated $\{s,t\}$ network for a flow maximization problem. Dummy vertexes (a source and a sink) are added. Each computational site is connected to the sink by a dummy edge. The source is connected to the NFS at RCF via dummy edge. The dummy edges are used in order to express constraints on network flow imposed by storage capacity and number of CPUs at each site.  Central HPSS is removed from consideration.}
+	\label{real_network}
+\end{figure} 
+
+\begin{figure}[h]
+	\begin{center}
 		\includegraphics [trim= 30mm 20mm 30mm 30mm , clip, angle =-90, width=0.7\textwidth]{pic/network_general.pdf}
 	\end{center}
 	\caption{Data production Grid represented as an capacitated $\{s,t\}$ network for input transfer planning (general case). $c_{0}$ is a central NFS storage (Tier-0), $c_{i}$ are computational nodes (where $i>0$), $l_{j}$ are network links, $d_{i}$ are dummy edges from computational nodes to the sink $t$, $q_{0}$ is a dummy edge leading from the source $s$ to the $c_{0}$. }
@@ -172,7 +171,11 @@ In order to transform a given graph of a Grid into a capacitated $\{s,t\}$
 network for an input transfer problem we add two dummy vertexes: a source $s$
 and a sink $t$. Next we add  dummy edges $d_{i} \in D$ from each computational
 node $i$ to the sink, and a dummy edge $q_{0}$ from the source $s$ to the
-central storage $c_{0}$. These dummy edges allow us to introduce constraints
+central storage $c_{0}$.
+For example, the transformation of the Grid form Figure \ref{sites} is illustrated at Figure \ref{real_network} (HPSS node was excluded from the consideration).
+
+
+ These dummy edges allow us to introduce constraints
 on the storage capacity of the nodes. The set of vertexes $V$ consists of
 computational nodes $C$ and dummy vertexes: $V= C \cup \{s,t\}$. The final set
 of edges consists of real network links $L$, dummy edges $D$ from
@@ -192,7 +195,7 @@ b_{j} \cdot \Delta T & \text{if }e = l_{j} \in L \\ w_{i} &
 %
 where $w_{i}$ is the maximal amount of data that can be
 transferred to the node $i$ without exceeding its storage capacity $Disk_{i}$
-and $k_{0}$ is the total size of available input files at $c_{0}$. We denote
+and $k_{0}$ is the total size of available input files at $c_{0}$. A general case of a resulting network in represented at Figure \ref{network_general}. We denote
 the solution for the input transfer problem as $f^{in}(e)$.
 
 \subsection{Output flow planning}
@@ -207,7 +210,7 @@ the solution for the input transfer problem as $f^{in}(e)$.
 
 For transfer of output files we use a similar transformation, but swap the
 source $s$ and the sink $t$, change the direction of dummy edges and redefine
-capacities of dummy edges. In this case the capacity $\overline{k}_{0}$ of the
+capacities of dummy edges (see Figure \ref{general_out}). In this case the capacity $\overline{k}_{0}$ of the
 dummy edge $\overline{q}_{0}$ leading from the central storage $c_0$ to the
 sink $s$ is equal to the amount of data which can be transferred to $c_0$
 within time interval $\Delta T$ (it is limited by the available space at the
@@ -323,9 +326,9 @@ w_{i} =
 Disk_{i} - I_{i}^{in} - I_{i}^{out} + \frac{1 - \beta}{\alpha_{i}} \cdot NCPU_{i} \cdot \Delta T + Del_{i}^{out}
 \label{w}
 \end{equation}
-where $Del_{i}^{out}$ is equal to the amount of data which will be transferred from node $c_{i}$, i.e. the solution to the output transfer problem $f^{out}(\overline{d}_{i})$ (see Subsection \ref{out_problem}). The other values used in Equation \ref{w} can be obtained from monitoring data.
+where $Del_{i}^{out}$ is equal to the amount of data which will be transferred from node $c_{i}$, i.e. the solution to the output transfer problem $f^{out}(\overline{d}_{i})$ (see Subsection \ref{outproblem}). The other values used in Equation \ref{w} can be obtained from monitoring data.
 
-Similarly, $\overline{w}_{i}$ was defined in Subsection \ref{out_problem} as maximal amount of output data which can be transferred from node $c_{i}$. From Equation \ref{delOut} we obtain:
+Similarly, $\overline{w}_{i}$ was defined in Subsection \ref{outproblem} as maximal amount of output data which can be transferred from node $c_{i}$. From Equation \ref{delOut} we obtain:
 \begin{equation}
 \label{sigma}
 \overline{w}_{i} = I_{i}^{out} + \frac{\beta}{\alpha_{i}} \cdot NCPU_{i} \cdot \Delta T - Min_{i}^{out}
@@ -640,25 +643,21 @@ An extension of this work could be the investigation of this result in a differe
 
 
 \section{Conclusion and future plans}
-Distributed data processing in HENP as well as other data intensive applications for Grid require further improvement of load planning and job sheduling. Inspired by success of global planning for distributed systems \cite{Zerola} and \cite{Rudova} we extended these approaches to the entire data production in HENP, combining job scheduling and data management.  
+Distributed data processing in HENP as well as other data intensive applications for Grid require further improvement of load planning and job scheduling. Inspired by success of global planning for distributed systems \cite{Zerola} and media streams \cite{Rudova} we extended these approaches to the entire data production in HENP, combining job scheduling and data management.  
 
 In Section \ref{Network_flow} we proposed a model of distributed data production, where all the files from a single source has to be processed once and transferred back. This model allows planning of WAN, storage and CPU loads using the network flow maximization approach. 
 
 In Section \ref{CP_approach} a model for scheduling of data production over Grid was formulated in form of constraint satisfaction problem and solved using constraint programming. The simulations based on data extracted from log files of batch and data management systems of the STAR experiment has shown that the proposed global planning approach systematically provides a smaller makespan and adapts to the increase of transfer overheads better then the other simulated  heuristics.
 
-%Both methods will be combined ...
+Both described approaches can be combined in a two-stage scheduling. At the first stage the load of the resources will be planned using the network flow maximization problem knowing the current state of the Grid. At this point the amount of data that should be transferred over each link and processed at each site will be calculated. Then, at the second stage, particular file transfers and jobs will be scheduled using our constraint programming model. 
 
-%The global goal is
-The proposed approach can provide an \textit{optimization} and an \textit{automatic adaptation} to fluctuating resources with no need for manual adjustment of a workflow at each site or tuning of heuristics.
+In addition to planning of data production, caching algorithms for user analysis were studied. The most widely used known algorithms were compared in multiple series of simulations using data access patterns extracted from log systems of two distinct experiments. Two best performing algorithms were selected to be used for cache management in HENP computational Grids. 
 
-The proposed model will be used in a distributed data production planner which is being developed. The planner will enable automated and scalable planning and optimization of distributed computations which are highly required in data intensive computational fields such as High Energy and Nuclear Physics.
+The achieved results will be used in a distributed data production planner which is being developed. The planner will enable automated and scalable planning and optimization of distributed computations which are highly required in data intensive computational fields such as High Energy and Nuclear Physics.
 
-%In addition to planning of data production, caching algorithms for user analysis were studied. The most widely used known algorithms were compared in multiple series of simulations usign data acess patterns extracted from log systems of two distinct experiments.
-
-%future plans
 The future development of global planning for data processing in Grid is ongoing. In future we plan to:
- %combine both modes;
-test this approach on problems of larger size using full scale Grid simulations with the help of modeling tools widely used in Grid research community;
+combine both proposed approaches in a global scheduler;
+test this approach using full scale Grid simulations with the help of modeling tools widely used in Grid research community;
 improve the planner performance in order to enable online scheduling in real environment. 
 
 
