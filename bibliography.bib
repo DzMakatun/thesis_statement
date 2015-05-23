@@ -74,7 +74,7 @@ distributed storage resources and {CPU}s",
 
 @article{ILVCT,
     author  = "Achara, J~P and Rathore, A and Gupta, V~K and Kashyap, A",
-    title   = "An improvement in LVCT cache replacement policy for data grid",
+    title   = "An improvement in {LVCT} cache replacement policy for data grid",
     year    = "2010",
     journal = "Proc. of the 13th Int. Workshop on Advanced Computing and Analysis Techniques in Physics Research",
     pages = "44"
@@ -122,6 +122,32 @@ distributed storage resources and {CPU}s",
     howpublished = "\url{https://svnweb.cern.ch/trac/lcgdm/wiki/Dpm}"
 }
 
+@misc{PBS,
+	key = "TORQUE",
+    title     = "{TORQUE} Resource Manager",
+    howpublished = "\url{http://www.adaptivecomputing.com/products/open-source/torque/}"
+}
+@misc{Torque,
+	key = "zzz",
+    title     = "Portable Batch System ({PBS})",
+    howpublished = "\url{http://www.pbsworks.com/}"
+}
+
+@article {Condor,
+author = {Thain, Douglas and Tannenbaum, Todd and Livny, Miron},
+title = {Distributed computing in practice: the Condor experience},
+journal = {Concurrency and Computation: Practice and Experience},
+volume = {17},
+number = {2-4},
+publisher = {John Wiley & Sons, Ltd.},
+issn = {1532-0634},
+url = {http://dx.doi.org/10.1002/cpe.938},
+doi = {10.1002/cpe.938},
+pages = {323--356},
+keywords = {Condor, Grid, history, community, planning, scheduling, split execution},
+year = {2005},
+}
+
 @conference{HorkyACAT,
     author    = "Hork\'y, J and Lokaj\'i\v{c}ek, M and Peisar, J",
     title     = "Influence of Distributing a Tier-2 Data Storage on Physics Analysis",
@@ -145,11 +171,14 @@ distributed storage resources and {CPU}s",
     year      = "2006"
 }
 
+
 @article{Rudova,
-	author = "Troubil, Pavel and Rudov\'a, Hana",
-	journal = "International Network Optimization Conference",
-	title = "Integer Linear Programming Models and Cycle Avoidance 		Methods for Media Streams Planning",
-	year = "2011"
+  title={Integer linear programming models for media streams planning},
+  author={Troubil, Pavel and Rudov{\'a}, Hana and others},
+  journal={ICAOR},
+  volume={11},
+  pages={509--522},
+  year={2011}
 }
 
 @inproceedings{Rudova_Multi-resource,
@@ -159,22 +188,17 @@ distributed storage resources and {CPU}s",
   year={2014}
 }
 
-@article {Rudova_Tabu_search,
-author = {Klusáček, Dalibor and Rudová, Hana},
-title = {EFFICIENT GRID SCHEDULING THROUGH THE INCREMENTAL SCHEDULE-BASED APPROACH},
-journal = {Computational Intelligence},
-volume = {27},
-number = {1},
-publisher = {Blackwell Publishing Inc},
-issn = {1467-8640},
-doi = {10.1111/j.1467-8640.2010.00369.x},
-pages = {4--22},
-keywords = {Grid computing, heuristic, incremental approach, local search, policy, scheduling},
-year = {2011},
+@inproceedings{Rudova_Tabu_search,
+  title={Performance and fairness for users in parallel job scheduling},
+  author={Klus{\'a}cek, Dalibor and Rudov{\'a}, Hana},
+  booktitle={Job Scheduling Strategies for Parallel Processing},
+  pages={235--252},
+  year={2013},
+  organization={Springer}
 }
 
 @incollection{MiniZinc,
-  title={Minizinc: Towards a standard CP modelling language},
+  title={Minizinc: Towards a standard {CP} modelling language},
   author={Nethercote, Nicholas and Stuckey, Peter J and Becket, Ralph and Brand, Sebastian and Duck, Gregory J and Tack, Guido},
   booktitle={Principles and Practice of Constraint Programming--CP 2007},
   pages={529--543},
