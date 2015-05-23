@@ -1,0 +1,17 @@
+\documentclass{article}
+\usepackage[
+backend=bibtex
+]{biblatex}
+\addbibresource{bibliography.bib}
+
+% whatever you need here, basically a good idea is to use your real thesis header
+\begin{document}
+
+\nocite{*}
+
+
+
+\printbibliography[keyword=my,heading=subbibliography,title={List of publications}]
+\printbibliography[heading=subbibliography]
+
+\end{document}
