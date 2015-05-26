@@ -1,17 +1,26 @@
 \documentclass{article}
+\usepackage{authblk}
+\usepackage{url}
 \usepackage[
-backend=bibtex
+backend=bibtex,
+sorting=none
 ]{biblatex}
 \addbibresource{bibliography.bib}
 
-% whatever you need here, basically a good idea is to use your real thesis header
+\title{List of publications \\ \large Distributed data processing for High Energy Physics }
+\author{Dzmitry Makatun KM FJFJ {\v{C}}VUT}
+%\email{d.i.makatun.gmail.com}
+%\affil{KM FJFJ {\v{C}}VUT}
+
 \begin{document}
+\maketitle
+\nocite{MISTA, ACAT_cp, Makatun_cache, ddny14, ddny13, ddny12}
+\nocite{STARmeeting2015, Brno_presentation, Australia_presentation, tcsc_presentation, STARmeeting2013}
 
-\nocite{*}
 
 
+\printbibliography[keyword=my,heading=subbibliography,title={Publications}]
+\printbibliography[keyword=my_presentaion,heading=subbibliography,title={Presentations}]
 
-\printbibliography[keyword=my,heading=subbibliography,title={List of publications}]
-\printbibliography[heading=subbibliography]
 
 \end{document}

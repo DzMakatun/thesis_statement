@@ -36,25 +36,9 @@ sorting=none
 
 \maketitle
 
-\begin{abstract}{english}
-
-\end{abstract}
-
-\begin{keywords}{english}
-constraint programming, Grid, Cloud, computing, data processing, data transfer, data production, planning, scheduling, optimization, computational jobs, batch system.
-\end{keywords}
-
-\begin{abstract}{czech}
-
-\end{abstract}
-
-\begin{keywords}{czech}
-
-\end{keywords}
-
 \tableofcontents
 
-
+\newpage
 \section{Introduction}
 The STAR experiment at the Relativistic Heavy Ion Collider (RHIC) studies a primordial form of matter that existed in the universe shortly after the Big Bang. Collisions of heavy ions occur millions of times per second inside the detector, producing tens of petabytes of raw data each year. All the raw detector data has to be processed in order to reconstruct physical events which are further analyzed by scientists. This process is called \textit{data production}.
 
@@ -74,6 +58,7 @@ When running data intensive applications on distributed computational resources 
 Previous collaborative work between BNL (Brookhaven National Laboratory) and NPI/ASCR (Nuclear Physics Institute, Academy of Sciences of the Czech Republic) showed that the global planning of data transfers within the Grid can outperform widely used heuristics such as Peer-to-Peer and Fastest link (used in Xrootd)\cite{Zerola}. This concept was later complemented with usage of caching \cite{Makatun_cache}. The comparison and selection of the most appropriate caching policies for the data access pattern in HEP is described in Section \ref{Cache}. 
  
 Those results became the ground for continuation of research and extension of global planning to the entire data processing workflow, i.e., scheduling of CPU allocation, data transferring and  placement at storage \cite{ACAT_cp,MISTA}. In Section \ref{CP_approach} we propose a constraint programming planner that schedules computational jobs and data transfers in a distributed environment in order to reduce the overall completion time. Since such global scheduling is computationally demanding it should be divided into several stages in order to improve scheduler performance and scalability. A planing of resource load can be accomplished in the first stage before scheduling particular file transfers and jobs. In Section \ref{Network_flow} we address the problem of data production planning, answering the question how the load should be distributed over resources and how the data should be transferred given the network structure, bandwidth, storage and CPU slots available. This will allow each computational site to load the CPUs with jobs while not exceeding disk and network capacities.
+
 
 \subsection{Workload types}
 Due to a data level of parallelism a typical workflow of HENP computation
@@ -121,7 +106,7 @@ processing time. In our study we do not limit the network topology to trees,
 and assume fluctuations of job parameters. 
 
 
-
+\newpage
 \section{Resource load planning}
 \label{Network_flow}
 Due to a data level of parallelism a typical workflow of HENP computation
@@ -377,6 +362,7 @@ To conclude, this procedure is expected to compute feasible data transfers
 such that CPUs in Grid are busy with computational jobs while not exceeding 
 local disk capacities.
 
+\newpage
 \section{Constraint programming approach}
 \label{CP_approach}
 Problems of scheduling, planning and optimization are being commonly solved with the help of Constraint Programming (CP) \cite{CP}. It is a form of declarative programming which is widely used in scheduling, logistics, network planning, vehicle routing, production optimization \textit{etc}... In the this section we will introduce our Constraint Satisfaction Problem (CSP) formulation for a data production at multiple sites and provide a simulation-based evaluation of the proposed model. In contrast to the model in previous section which plans global data flow this model describes per job/file/transfer scheduling. 
@@ -483,6 +469,7 @@ The simulated environment consisted of 3 nodes: a central storage HPSS ($cpu_{HP
 
 The plot at Figure \ref{fig:makespan_vs_slowdown} shows the gain in a makespan delivered by different scheduling policies compared to the job execution at the local site only. The curves show the performance of the scheduling policies when an overhead of transfer to the remote site increases proportionally to the slowdown factor. When the transfer overhead becomes significant both heuristics (``Equal CPU load'' and ``Data transferred by job'') fail to provide an efficient usage of the remote resources (the makespan improvement goes below zero). Negative makespan improvement means that, in this case, it would be faster to process all the data locally than to distribute it between several sites relying on the heuristic. The proposed global planning approach (Optimized) systematically provides a smaller makespan and adapts to the increase of transfer overheads better then the other simulated  heuristics. It provides a positive gain in makespan by using remote resources even when the transfer overhead is comparable to a job duration.  
 
+\newpage
 \section{Enabling caching}
 \label{Cache}
 Efficient usage of available cache space is important for transferring and accessing data in computational grids. Though, a great variety of caching algorithms is known, a study is needed to evaluate which one can deliver the best performance in data access considering the realistic demand patterns.
@@ -646,6 +633,7 @@ An extension of this work could be the investigation of this result in a differe
 	\item If the goal is to minimize makespan due to a transfer startup overhead the LVCT algorithm should be selected.
 	\item If the goal is to minimize the network load the ARC algorithm is an option.
 \end{itemize}
+
 
 
 
