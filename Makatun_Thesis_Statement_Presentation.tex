@@ -25,8 +25,8 @@ sorting=none
 %\author[Dzmitry Makatun]{\textbf{Dzmitry~Makatun} \inst{1} $^{,}$ \inst{2}}
 
 \author[Dzmitry Makatun]{\textbf{Dzmitry~Makatun} \inst{1} \inst{3} \and J\'er\^ome~Lauret\inst{2}\\ \and Michal~\v{S}umbera \inst{1} \and Hana~Rudov\'a \inst{4}}
-\title[FJFI, CTU]{Distributed Data Processing for High Energy Physics} 
-\institute [km]
+\title[FJFI, \v{C}VUT]{Distributed Data Processing for High Energy Physics} 
+\institute [KM, FJFI]
 { 
   \inst{1}%
   Nuclear Physics Institute, Academy of Sciences, Czech Republic
@@ -244,7 +244,7 @@ Heuristics such as  \texttt{[Pull a job when CPU slot is free]} will not give th
  	\end{columns}
 \end{frame}
 
-\section{Existing solutions}
+\subsection{Existing solutions}
 \begin{frame}\frametitle{STAR: setup for data production at a remote site (KISTI)}
 \begin{figure}
 \begin{center}
@@ -314,7 +314,7 @@ Heuristics such as  \texttt{[Pull a job when CPU slot is free]} will not give th
 \end{block} 	 
 \end{frame}
 
-\begin{frame}\frametitle{Distributed resource management system architecture (Globus example) \cite{Globus_scheduler}}
+\begin{frame}\frametitle{Distributed resource management system. Architecture (Globus example) \cite{Globus_scheduler}}
 \begin{block}{}
 		\begin{itemize}
 			\item  The resource broker is acting as a middle tier 
@@ -606,7 +606,102 @@ Constraints for storage capacity are omitted.
 \end{footnotesize}
 \end{frame} 	
 
-\section{Resource load planning}
+\section{Network flow model}
+\begin{frame}\frametitle{Motivation}
+\begin{block}{Drawbacks of CP model}
+\begin{itemize}
+\item Slow performance (NP-hard problem).
+\item Unnecessary calculations:
+			\begin{itemize}
+			\item Path for each job.
+			\item Node selection for a particular job.
+			\item Order  of jobs.
+			\item Makespan of a particular job.
+			\end{itemize}
+\end{itemize}
+\end{block}         
+
+\begin{block}{Network flow model}
+\begin{itemize}
+\item Similar problem solved: high-quality media streams planning \cite{Rudova}.
+\item Idea: plan resource load only and then distribute particular jobs accordingly. Planning time interval $\Delta T$, $Flow$ - amount of data, link capacity - maximum bandwidth.
+\item Network flow maximization problem can be solved within polynomial time.
+\end{itemize}
+\end{block}    
+\end{frame}
+
+\begin{frame}\frametitle{Input transfer planning: How much data can be transferred during the next planning interval $\Delta T$?}
+Dummy edges - constraints on  storage and CPUs at each site.
+\begin{figure}[h]
+	\begin{center}
+		\includegraphics [trim= 30mm 30mm 30mm 30mm , clip, angle =-90, width=0.7\textwidth]{pic/real_network.pdf}
+	\end{center}
+	\label{real_network}
+\end{figure} 
+\vspace{-3mm}
+Output flow problem can be formulated similarly.
+\end{frame}
+
+\begin{frame}\frametitle{Solving procedure}
+\begin{block}{}
+Problems for input and output transfers can be solved independently under assumptions: 
+\begin{itemize}
+\item Full-duplex links,
+\item In a steady state at each node $Processed\_input\_data= \beta \cdot created\_output\_data$, where $\beta \leq 1$.
+\end{itemize}
+\end{block} 
+
+\begin{block}{Solving procedure}
+\begin{enumerate}
+\item Calculate capacities of dummy edges using monitoring data.
+\item Solve the problem for output data flows.
+\item Recalculate remaining network capacity.
+\item Solve the problem for input transfers.
+\end{enumerate}
+\end{block}    
+\end{frame}
+
+
+\begin{frame}\frametitle{Plan execution}
+
+\begin{columns}[c] % the "c" option specifies center vertical alignment
+    \column{.6\textwidth} % column designated by a command 	
+
+\begin{block}{}
+\begin{itemize}
+\item A local handler at each node receives the plan:
+
+\begin{itemize}
+\footnotesize
+\item Flows of outgoing edges - how much data of each type should be send over that link.
+\item Flow of dummy edges - how much data should be processed at this node.
+ \end{itemize}
+
+\item When a new file arrives, the handler decides according to the plan and current state:
+
+\begin{itemize}
+\footnotesize
+ \item Process the file (transfer over dummy edge)
+ \item OR forward it over one of the links  
+ \end{itemize}
+ \item Decrease remaining flow of the link by the size of the file after transfer.
+\end{itemize}
+\end{block}    
+
+
+\column{.4\textwidth}
+\begin{figure}[h]
+		\includegraphics [trim= 30mm 30mm 30mm 30mm , clip, angle =-90, width=\textwidth]{pic/handler_process.pdf}
+	\label{real_network}
+\end{figure} 
+
+\begin{figure}[h]
+		\includegraphics [trim= 30mm 30mm 30mm 30mm , clip, angle =-90, width=\textwidth]{pic/handler_forwarddia.pdf}
+	\label{real_network}
+\end{figure} 
+\end{columns}
+
+\end{frame}
 
 \section{Enabling Caching}
 
@@ -714,8 +809,26 @@ $\bullet $ With higher low mark the number of clean-ups increases as well as ove
 
 \section{Conclusion and future plans}
 
-\begin{frame}\frametitle{}
+\begin{frame}\frametitle{Conclusion}
+\begin{block}{}
+\begin{itemize}
+\item Automated and scalable planning and optimization of distributed computations are highly required in data intensive computational fields such as High Energy and Nuclear Physics.
+\item Resent works has revealed the potential of global planning for this task.
+\item A CSP for scheduling of data production over Grid was formulated. 
+\item The simulations based on log data has shown that the proposed approach systematically provides a smaller makespan and adapts to the increase of transfer overheads better then the other simulated  heuristics.
+\item Caching algorithms has been evaluated to meet the needs of distributed data production.
+\item Network flow model
+\end{itemize}
+\end{block}
+\end{frame}
 
+\begin{frame}\frametitle{Future plan}
+\begin{block}{}
+\begin{itemize}
+\item Test the new approach using full scale Grid simulations with the help of modeling tools widely used in Grid research community (GridSim) 
+\item Improve the planner performance in order to enable online scheduling in real environment. 
+\end{itemize}
+\end{block}
 \end{frame}
 
 \printbibliography
