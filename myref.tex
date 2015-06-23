@@ -1,4 +1,5 @@
 \documentclass{article}
+\usepackage[a4paper,margin=1in,landscape]{geometry}
 \usepackage[
 backend=bibtex,
 sorting=none,
@@ -9,8 +10,8 @@ style=numeric
 \begin{document}
 \nocite{MISTA, ACAT_cp, Makatun_cache, ddny14, ddny13, ddny12}
 \nocite{STARmeeting2015, Brno_presentation, Australia_presentation, tcsc_presentation, STARmeeting2013}
-\renewcommand*{\bibfont}{\scriptsize}
+%\renewcommand*{\bibfont}{\small}
 \printbibliography[keyword=my,heading=subbibliography,title={Publications}]
-%\printbibliography[keyword=my_presentaion,heading=subbibliography,title={Presentations}]
+\printbibliography[keyword=my_presentaion,heading=subbibliography,title={Presentations}]
 
 \end{document}
