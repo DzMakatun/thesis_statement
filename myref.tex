@@ -1,0 +1,16 @@
+\documentclass{article}
+\usepackage[
+backend=bibtex,
+sorting=none,
+style=numeric
+]{biblatex}
+\addbibresource{bibliography.bib}
+% whatever you need here, basically a good idea is to use your real thesis header
+\begin{document}
+\nocite{MISTA, ACAT_cp, Makatun_cache, ddny14, ddny13, ddny12}
+\nocite{STARmeeting2015, Brno_presentation, Australia_presentation, tcsc_presentation, STARmeeting2013}
+\renewcommand*{\bibfont}{\scriptsize}
+\printbibliography[keyword=my,heading=subbibliography,title={Publications}]
+%\printbibliography[keyword=my_presentaion,heading=subbibliography,title={Presentations}]
+
+\end{document}

@@ -404,7 +404,7 @@ In previous work \cite{Zerola} it was proved that:
 \vspace{-4mm}
 \begin{block}{Domain variables:}
 \begin{itemize}
-\item $Y_{jc} \in \{0,1\}$ job j processed at node c. 
+\item $Y_{j} \in \{0,n\}$ selected processing node. 
 \item $X_{fl} \in \{0,1\}$  file $f$ transferred over link $l$.
 \item $Js_{j}$ start time of job $j$.
 \item $Ts_{fl}$ start time of transfer of file $f$ over link $l$.
@@ -441,21 +441,11 @@ Dependent on above
 \end{frame}
 
 
-\begin{frame}\frametitle{Planning stage (core constraints)}
+\begin{frame}\frametitle{Summary of constraints}
 \vspace{-5mm}
-		\begin{block}{Each job processed exactly at one node: (job $j$, node $c$)}
-	 	
-		\begin{center}
-					$\forall j \in J: \sum \limits_{c \in C} Y_{jc} = 1$ 	
-		\end{center}	
-	
-		\end{block}
-	\begin{block}{Target function $T_{est}$  - estimated makespan.  }
-	For each node $c$:
-	$T_{Processing} + T_{InputTransfer} + T_{OutputTransfer} \leq T_{est}$
-	\end{block}
-	
-	\begin{block}{Path selection}
+\begin{footnotesize}
+	\begin{block}{Planning stage}
+	\vspace{-2mm}
 \begin{columns}[c] % the "c" option specifies center vertical alignment
     \column{.8\textwidth} % column designated by a command
 File can be transferred from/to each node at most once.
@@ -463,51 +453,29 @@ File can be transferred from/to each node at most once.
 		\item Transfer input file from sources over 1 link.
 		\item Transfer output to final destination over 1 link.
 		\item Intermediate node: If $\exists$ incoming transfer $\Leftrightarrow \exists$ outgoing transfer. 
-		\item Selected processing node: 1 incoming input transfer, 1 outgoing input transfer.	
+		\item Selected processing node: 1 incoming input transfer, 1 outgoing input transfer.			 	
 		\end{enumerate}
 	\column{.2\textwidth}	
 	\includegraphics [trim =30mm 70mm 30mm 30mm ,clip, width=\textwidth]{pic/link_selection.pdf}	
 	\end{columns}
-\end{block}
-\end{frame}
 
-
-		
-
-\begin{frame}\frametitle{Scheduling Stage: order of tasks.}
-\begin{block}{Outgoing transfer starts after the incomming one is finished:}
-$Ts_{fl}$  transfer start of file $f$ over a link $l$, $c$ is a node. $\forall f \in F, \forall c \in IntermediateNode$:
-$$Ts_{fl_{out}} \geq Ts_{fl_{in}} + Size(f) \cdot Slowdown(l_{in}) $$
-\end{block}
-
-\begin{block}{Jobs starts after the input file transfer is finished}
-$Js_{j}$ start time of a job $j$. $\forall j \in J, l \in L, f = InputFile(j)$
-$$Js_{j} \geq Ts_{fl} + Size(f)\cdot Slowdown(l)$$
-\end{block}
-
-\begin{block}{Output file is transferred after the job is finished}
-$Dur(j)$ is duration of a job $j$.  $\forall j \in J, l \in L, f = OutputFile(j)$
-$$Js_{j} +Dur(j) \leq Ts_{fl}$$
-\end{block}
-\end{frame}
-
-\begin{frame}\frametitle{Scheduling Stage: data placement}
-\begin{block}{Space reservation at destination node is made when transfer starts}
-$Fs_{fc}$ - start of reservation for file $f$ at node $c$, $Ts_{fl}$  transfer start of file $f$ over a link $l$ to node $c$: \hspace{5mm} $Fs_{fc}=Ts_{fl}$ 
 
 \end{block}
-\begin{block}{File can be deleted from start node of a link after the transfer}
-$Fdur_{fc}$- duration of file $f$ placement at node $c$, $l$ is outgoing link from $c$
-\\ \hspace{30mm}$Fs_{fc}+Fdur_{fc}= Ts_{fl}+Size(f)\cdot Slowdown(l)$
+\begin{block}{Scheduling stage}
+\vspace{-2mm}
+\begin{itemize}
+\item Outgoing transfer starts after the incoming one.
+\item Jobs starts after the input file transfer is finished.
+\item Output file is transferred after the job is finished.
+\item Space reservation at destination node is made when transfer starts.
+\item File can be deleted from start node of a link after the transfer.
+\item Space for output is reserved when a job starts.
+\item When a job finishes its input file can be deleted.
+\end{itemize}
 \end{block}
 
-\begin{block}{At selected processing node $c$}
-When a job $j$ starts ($Js_j$) then space for output is reserved
-$f = OutputFile(j):$ 
- \hspace{20mm}$Fs_{fc}=Js_{j} $
-\\When a job finishes its input file can be deleted
-$f = InputFile(j):$\\ \hspace{40mm} $Fs_{fc}+Fdur_{fc}=Js_j+Duration(j)  $
-\end{block}
+\end{footnotesize}
+
 \end{frame}
 
 
@@ -647,7 +615,7 @@ Output flow problem can be formulated similarly.
 Problems for input and output transfers can be solved independently under assumptions: 
 \begin{itemize}
 \item Full-duplex links,
-\item In a steady state at each node $Processed\_input\_data= \beta \cdot created\_output\_data$, where $\beta \leq 1$.
+\item In a steady state at each node $Processed\_input\_data= \beta \cdot created\_output\_data$, where~$\beta = const.\leq 1$.
 \end{itemize}
 \end{block} 
 

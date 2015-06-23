@@ -1,0 +1,240 @@
+% $ biblatex auxiliary file $
+% $ biblatex version 2.4 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated as
+% required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+\entry{Zerola}{article}{}
+  \name{author}{4}{}{%
+    {{}%
+     {Zerola}{Z.}%
+     {M}{M}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Lauret}{L.}%
+     {J}{J}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Bart\'ak}{B.}%
+     {R}{R}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {\v{S}umbera}{v.}%
+     {M}{M}%
+     {}{}%
+     {}{}}%
+  }
+  \strng{namehash}{ZM+1}
+  \strng{fullhash}{ZMLJBRvM1}
+  \field{labelyear}{2012}
+  \field{number}{012022}
+  \field{title}{One click dataset transfer: toward efficient coupling of
+  distributed storage resources and {CPU}s}
+  \field{volume}{368}
+  \field{journaltitle}{J. Phys.: Conf. Ser.}
+  \field{year}{2012}
+\endentry
+
+\entry{Balewski}{article}{}
+  \true{moreauthor}
+  \name{author}{5}{}{%
+    {{}%
+     {Balewski}{B.}%
+     {Jan}{J.}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Lauret}{L.}%
+     {Jerome}{J.}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Olson}{O.}%
+     {Doug}{D.}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Sakrejda}{S.}%
+     {Iwona}{I.}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Arkhipkin}{A.}%
+     {Dmitry}{D.}%
+     {}{}%
+     {}{}}%
+  }
+  \strng{namehash}{BJ+1}
+  \strng{fullhash}{BJLJODSIAD+1}
+  \field{labelyear}{2012}
+  \field{number}{012011}
+  \field{title}{Offloading peak processing to virtual farm by {STAR} experiment
+  at {RHIC}}
+  \field{volume}{368}
+  \field{journaltitle}{J. Phys.: Conf. Ser.}
+  \field{year}{2012}
+\endentry
+
+\entry{KISTI}{misc}{}
+  \field{howpublished}{\url{http://en.kisti.re.kr/}}
+  \field{title}{Korea Institute of Science and Technology Information {KISTI}}
+\endentry
+
+\entry{Trees}{inproceedings}{}
+  \name{author}{5}{}{%
+    {{}%
+     {Beaumont}{B.}%
+     {Olivier}{O.}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Carter}{C.}%
+     {Larry}{L.}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Ferrante}{F.}%
+     {Jeanne}{J.}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Legrand}{L.}%
+     {Arnaud}{A.}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Robert}{R.}%
+     {Yves}{Y.}%
+     {}{}%
+     {}{}}%
+  }
+  \list{organization}{1}{%
+    {IEEE}%
+  }
+  \strng{namehash}{BO+1}
+  \strng{fullhash}{BOCLFJLARY1}
+  \field{labelyear}{2001}
+  \field{booktitle}{Parallel and Distributed Processing Symposium., Proceedings
+  International, IPDPS 2002}
+  \field{pages}{6\bibrangedash pp}
+  \field{title}{Bandwidth-centric allocation of independent tasks on
+  heterogeneous platforms}
+  \field{year}{2001}
+\endentry
+
+\entry{casanova2000heuristics}{inproceedings}{}
+  \name{author}{4}{}{%
+    {{}%
+     {Casanova}{C.}%
+     {Henri}{H.}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Legrand}{L.}%
+     {Arnaud}{A.}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Zagorodnov}{Z.}%
+     {Dmitrii}{D.}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Berman}{B.}%
+     {Francine}{F.}%
+     {}{}%
+     {}{}}%
+  }
+  \list{organization}{1}{%
+    {IEEE}%
+  }
+  \strng{namehash}{CH+1}
+  \strng{fullhash}{CHLAZDBF1}
+  \field{labelyear}{2000}
+  \field{booktitle}{Heterogeneous Computing Workshop, 2000.(HCW 2000)
+  Proceedings. 9th}
+  \field{pages}{349\bibrangedash 363}
+  \field{title}{Heuristics for scheduling parameter sweep applications in grid
+  environments}
+  \field{year}{2000}
+\endentry
+
+\entry{santos2005exploiting}{inproceedings}{}
+  \name{author}{4}{}{%
+    {{}%
+     {Santos-Neto}{S.-N.}%
+     {Elizeu}{E.}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Cirne}{C.}%
+     {Walfredo}{W.}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Brasileiro}{B.}%
+     {Francisco}{F.}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Lima}{L.}%
+     {Aliandro}{A.}%
+     {}{}%
+     {}{}}%
+  }
+  \list{organization}{1}{%
+    {Springer}%
+  }
+  \strng{namehash}{SNE+1}
+  \strng{fullhash}{SNECWBFLA1}
+  \field{labelyear}{2005}
+  \field{booktitle}{Job Scheduling Strategies for Parallel Processing}
+  \field{pages}{210\bibrangedash 232}
+  \field{title}{Exploiting replication and data reuse to efficiently schedule
+  data-intensive applications on grids}
+  \field{year}{2005}
+\endentry
+
+\entry{Globus_scheduler}{article}{}
+  \name{author}{2}{}{%
+    {{}%
+     {Ranganathan}{R.}%
+     {K}{K}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Foster}{F.}%
+     {I}{I}%
+     {}{}%
+     {}{}}%
+  }
+  \strng{namehash}{RKFI1}
+  \strng{fullhash}{RKFI1}
+  \field{labelyear}{2002}
+  \field{pages}{352\bibrangedash 358}
+  \field{title}{Decoupling computation and data scheduling in distributed
+  data-intensive applications}
+  \field{journaltitle}{11th {IEEE} International Symposium on High Performance
+  Distributed Computing}
+  \field{year}{2002}
+\endentry
+
+\lossort
+\endlossort
+
+\endinput
