@@ -16,38 +16,9 @@
   {}
 \endgroup
 
-\entry{Zerola}{article}{}
-  \name{author}{4}{}{%
-    {{}%
-     {Zerola}{Z.}%
-     {M}{M}%
-     {}{}%
-     {}{}}%
-    {{}%
-     {Lauret}{L.}%
-     {J}{J}%
-     {}{}%
-     {}{}}%
-    {{}%
-     {Bart\'ak}{B.}%
-     {R}{R}%
-     {}{}%
-     {}{}}%
-    {{}%
-     {\v{S}umbera}{v.}%
-     {M}{M}%
-     {}{}%
-     {}{}}%
-  }
-  \strng{namehash}{ZM+1}
-  \strng{fullhash}{ZMLJBRvM1}
-  \field{labelyear}{2012}
-  \field{number}{012022}
-  \field{title}{One click dataset transfer: toward efficient coupling of
-  distributed storage resources and {CPU}s}
-  \field{volume}{368}
-  \field{journaltitle}{J. Phys.: Conf. Ser.}
-  \field{year}{2012}
+\entry{KISTI}{misc}{}
+  \field{howpublished}{\url{http://en.kisti.re.kr/}}
+  \field{title}{Korea Institute of Science and Technology Information {KISTI}}
 \endentry
 
 \entry{Balewski}{article}{}
@@ -90,9 +61,38 @@
   \field{year}{2012}
 \endentry
 
-\entry{KISTI}{misc}{}
-  \field{howpublished}{\url{http://en.kisti.re.kr/}}
-  \field{title}{Korea Institute of Science and Technology Information {KISTI}}
+\entry{Zerola}{article}{}
+  \name{author}{4}{}{%
+    {{}%
+     {Zerola}{Z.}%
+     {M}{M}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Lauret}{L.}%
+     {J}{J}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Bart\'ak}{B.}%
+     {R}{R}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {\v{S}umbera}{v.}%
+     {M}{M}%
+     {}{}%
+     {}{}}%
+  }
+  \strng{namehash}{ZM+1}
+  \strng{fullhash}{ZMLJBRvM1}
+  \field{labelyear}{2012}
+  \field{number}{012022}
+  \field{title}{One click dataset transfer: toward efficient coupling of
+  distributed storage resources and {CPU}s}
+  \field{volume}{368}
+  \field{journaltitle}{J. Phys.: Conf. Ser.}
+  \field{year}{2012}
 \endentry
 
 \entry{Trees}{inproceedings}{}
@@ -232,6 +232,29 @@
   \field{journaltitle}{11th {IEEE} International Symposium on High Performance
   Distributed Computing}
   \field{year}{2002}
+\endentry
+
+\entry{Rudova}{article}{}
+  \name{author}{2}{}{%
+    {{}%
+     {Troubil}{T.}%
+     {Pavel}{P.}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Rudov{\'a}}{R.}%
+     {Hana}{H.}%
+     {}{}%
+     {}{}}%
+  }
+  \strng{namehash}{TPRH1}
+  \strng{fullhash}{TPRH1}
+  \field{labelyear}{2011}
+  \field{pages}{509\bibrangedash 522}
+  \field{title}{Integer linear programming models for media streams planning}
+  \field{volume}{11}
+  \field{journaltitle}{ICAOR}
+  \field{year}{2011}
 \endentry
 
 \lossort
